@@ -57,12 +57,14 @@ export default function LoginPage() {
     setErrorMessage('');
     try {
       await signInWithEmailAndPassword(firebaseAuth, values.email, values.password);
-      // El useEffect se encargará de la redirección cuando 'user' se actualice.
-      // El AuthProvider manejará el estado de carga global.
+      
       toast({
         title: 'Inicio de sesión exitoso',
         description: 'Serás redirigido al panel de control.',
       });
+      // Redirección explícita después del éxito.
+      router.push('/dashboard');
+
     } catch (error: any) {
       let message = 'Ha ocurrido un error inesperado.';
       if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {

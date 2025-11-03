@@ -15,13 +15,14 @@ import {
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { initiateEmailSignIn, useUser } from '@/firebase';
+import { useAuth, initiateEmailSignIn } from '@/firebase';
 import Link from 'next/link';
 import { Logo } from '@/components/icons';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useState, useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
-import { useAuth as useFirebaseAuth } from '@/firebase';
+import { useAuth as useAppAuth } from '@/hooks/use-auth-provider';
+import { signInWithEmailAndPassword } from 'firebase/auth';
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Por favor, introduce un correo electrónico válido.' }),
@@ -32,8 +33,9 @@ export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const firebaseAuth = useFirebaseAuth();
-  const { user, isUserLoading } = useUser();
+  const [errorMessage, setErrorMessage] = useState('');
+  const firebaseAuth = useAuth();
+  const { user, loading: authLoading } = useAppAuth();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -44,42 +46,38 @@ export default function LoginPage() {
   });
 
   useEffect(() => {
-    if (!isUserLoading && user) {
+    if (!authLoading && user) {
       router.replace('/dashboard');
     }
-  }, [user, isUserLoading, router]);
-
+  }, [user, authLoading, router]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
+    setErrorMessage('');
     try {
-      // We are not awaiting this call. The auth state change will be detected
-      // by the useUser hook and the useEffect above will handle the redirect.
-      initiateEmailSignIn(firebaseAuth, values.email, values.password);
-      
-      // We can show a toast for feedback, but the redirect is handled elsewhere.
+      await signInWithEmailAndPassword(firebaseAuth, values.email, values.password);
+      // The useEffect above will handle the redirect on successful login
       toast({
-        title: 'Iniciando sesión...',
-        description: 'Serás redirigido en un momento.',
+        title: 'Inicio de sesión exitoso',
+        description: 'Serás redirigido al panel de control.',
       });
-
+      // The redirect is now handled by the useEffect hook watching the `user` state.
     } catch (error: any) {
-      // This catch block might not be reached for auth errors if not awaited,
-      // but it's good for catching other potential issues.
-      // Firebase auth errors are typically handled by listening to onAuthStateChanged.
-      // For a better UX, a global error listener could show auth-specific toasts.
+      setIsLoading(false);
+      let message = 'Ha ocurrido un error inesperado.';
+      if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+        message = 'El correo electrónico o la contraseña son incorrectos.';
+      }
+      setErrorMessage(message);
       toast({
         variant: 'destructive',
         title: 'Error al iniciar sesión',
-        description: error.message || 'Por favor, comprueba tus credenciales.',
+        description: message,
       });
-      setIsLoading(false);
     }
-    // Don't set isLoading to false immediately. Let the redirect handle the view change.
   }
 
-  // Show a loading spinner while checking auth state or if the user is already logged in and redirecting.
-  if (isUserLoading || user) {
+  if (authLoading || user) {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
         <Loader2 className="h-10 w-10 animate-spin text-primary" />
@@ -125,8 +123,11 @@ export default function LoginPage() {
                 </FormItem>
               )}
             />
+            {errorMessage && (
+              <p className="text-sm font-medium text-destructive">{errorMessage}</p>
+            )}
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Iniciar sesión
             </Button>
           </form>

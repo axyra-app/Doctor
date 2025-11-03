@@ -14,13 +14,13 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth } from '@/hooks/use-auth-provider';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Loader2, Upload } from 'lucide-react';
 import { useState } from 'react';
-// import { doc, updateDoc } from 'firebase/firestore';
-// import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-// import { db, storage } from '@/lib/firebase/firebase';
+import { useFirestore, updateDocumentNonBlocking } from '@/firebase';
+import { doc } from 'firebase/firestore';
+
 
 const profileSchema = z.object({
   firstName: z.string().min(2, { message: 'El nombre es requerido.' }),
@@ -36,6 +36,7 @@ export function ProfileForm() {
   const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const firestore = useFirestore();
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
@@ -60,11 +61,8 @@ export function ProfileForm() {
     setIsLoading(true);
 
     try {
-      // Stub for Firebase update
-      // const userDocRef = doc(db, 'users', user.uid);
-      // await updateDoc(userDocRef, data);
-
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
+      const userDocRef = doc(firestore, 'users', user.uid);
+      updateDocumentNonBlocking(userDocRef, data);
 
       toast({
         title: 'Perfil actualizado',

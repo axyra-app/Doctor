@@ -1,6 +1,6 @@
 'use client';
 
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth } from '@/hooks/use-auth-provider';
 import { PatientDashboard } from '@/components/patient/patient-dashboard';
 import { DoctorDashboard } from '@/components/doctor/doctor-dashboard';
 import { Skeleton } from '@/components/ui/skeleton';

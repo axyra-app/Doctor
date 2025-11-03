@@ -22,9 +22,10 @@ import {
   Sparkles
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth } from '@/hooks/use-auth-provider';
 import type { UserProfile } from '@/types';
 import { Logo } from './icons';
+import { useAuth as useFirebaseAuth } from '@/firebase';
 
 interface MainSidebarProps {
   user: UserProfile;
@@ -47,9 +48,11 @@ export function MainSidebar({ user }: MainSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { logout } = useAuth();
+  const firebaseAuth = useFirebaseAuth();
   const navItems = user.role === 'doctor' ? doctorNav : patientNav;
 
   const handleLogout = async () => {
+    await firebaseAuth.signOut();
     await logout();
     router.push('/login');
   };

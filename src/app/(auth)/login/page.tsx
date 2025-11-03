@@ -1,4 +1,3 @@
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -16,13 +15,13 @@ import {
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { auth } from '@/lib/firebase/firebase';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { initiateEmailSignIn, useAuth } from '@/firebase';
 import Link from 'next/link';
 import { Logo } from '@/components/icons';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
+import { useUser } from '@/firebase';
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Por favor, introduce un correo electrónico válido.' }),
@@ -33,6 +32,8 @@ export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const auth = useAuth();
+  const { user, isUserLoading } = useUser();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -42,24 +43,34 @@ export default function LoginPage() {
     },
   });
 
+  useEffect(() => {
+    if (!isUserLoading && user) {
+      router.push('/dashboard');
+    }
+  }, [user, isUserLoading, router]);
+
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     try {
-      await signInWithEmailAndPassword(auth, values.email, values.password);
-      toast({
-        title: "Inicio de sesión exitoso",
-        description: "Bienvenido de nuevo.",
-      });
-      router.push('/dashboard');
+      initiateEmailSignIn(auth, values.email, values.password);
+      // The onAuthStateChanged listener in the provider will handle the redirect
     } catch (error: any) {
       toast({
         variant: 'destructive',
         title: 'Error al iniciar sesión',
         description: error.message || 'Por favor, comprueba tus credenciales.',
       });
-    } finally {
       setIsLoading(false);
     }
+  }
+
+  if (isUserLoading || user) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-background">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+      </div>
+    );
   }
 
   return (

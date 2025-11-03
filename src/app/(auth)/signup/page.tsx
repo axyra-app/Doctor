@@ -15,9 +15,9 @@ import {
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { auth, db } from '@/lib/firebase/firebase';
+import { useAuth, useFirestore, setDocumentNonBlocking } from '@/firebase';
 import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc } from 'firebase/firestore';
 import Link from 'next/link';
 import { Logo } from '@/components/icons';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -39,6 +39,8 @@ export default function SignupPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const auth = useAuth();
+  const firestore = useFirestore();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -56,15 +58,16 @@ export default function SignupPage() {
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
       const user = userCredential.user;
 
-      const userProfile: UserProfile = {
-        uid: user.uid,
+      const userProfile: Omit<UserProfile, 'uid'> = {
         firstName: values.firstName,
         lastName: values.lastName,
         email: user.email,
         role: values.role,
       };
-
-      await setDoc(doc(db, 'users', user.uid), userProfile);
+      
+      const userDocRef = doc(firestore, 'users', user.uid);
+      setDocumentNonBlocking(userDocRef, userProfile, { merge: true });
+      
       await sendEmailVerification(user);
 
       toast({

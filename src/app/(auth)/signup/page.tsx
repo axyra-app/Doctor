@@ -58,7 +58,6 @@ export default function SignupPage() {
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
       const user = userCredential.user;
 
-      // The schema now includes the uid, which is good practice.
       const userProfile: Omit<UserProfile, 'uid'> & { uid: string } = {
         uid: user.uid,
         firstName: values.firstName,
@@ -68,7 +67,6 @@ export default function SignupPage() {
       };
       
       const userDocRef = doc(firestore, 'users', user.uid);
-      // Using non-blocking update for better UX. The catch is handled by the global error emitter.
       setDocumentNonBlocking(userDocRef, userProfile, { merge: true });
       
       await sendEmailVerification(user);

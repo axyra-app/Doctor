@@ -95,7 +95,7 @@ export default function LoginPage() {
         <div className="mx-auto mb-4">
           <Logo className="h-12 w-12 text-primary" />
         </div>
-        <CardTitle className="text-2xl">Bienvenido a DoctorExpress</CardTitle>
+        <CardTitle className="text-2xl">Bienvenido a DoctorAtHome</CardTitle>
         <CardDescription>Inicia sesión para continuar</CardDescription>
       </CardHeader>
       <CardContent>

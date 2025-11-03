@@ -66,7 +66,7 @@ export function MainSidebar({ user }: MainSidebarProps) {
     <Sidebar variant="sidebar" collapsible="icon">
       <SidebarHeader className="items-center justify-center gap-2 text-center group-data-[collapsible=icon]:hidden">
         <Logo className="h-8 w-8 text-primary" />
-        <h2 className="text-lg font-semibold tracking-tight text-primary">DoctorExpress</h2>
+        <h2 className="text-lg font-semibold tracking-tight text-primary">DoctorAtHome</h2>
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenu>

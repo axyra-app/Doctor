@@ -95,7 +95,7 @@ export default function SignupPage() {
           <Logo className="h-12 w-12 text-primary" />
         </div>
         <CardTitle className="text-2xl">Crea tu cuenta</CardTitle>
-        <CardDescription>Únete a DoctorExpress hoy</CardDescription>
+        <CardDescription>Únete a DoctorAtHome hoy</CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>

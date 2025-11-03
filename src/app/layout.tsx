@@ -6,7 +6,7 @@ import { FirebaseClientProvider } from '@/firebase';
 import { AuthProvider } from '@/hooks/use-auth-provider';
 
 export const metadata: Metadata = {
-  title: 'DoctorExpress',
+  title: 'DoctorAtHome',
   description: 'Home medical services application',
 };
 

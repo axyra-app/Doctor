@@ -1,0 +1,217 @@
+{
+  "entities": {
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user of the DoctorAtHome application, either a patient or a doctor.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user."
+        },
+        "firstName": {
+          "type": "string",
+          "description": "The first name of the user."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "The last name of the user."
+        },
+        "role": {
+          "type": "string",
+          "description": "The role of the user (patient or doctor).",
+          "format": "enum",
+          "items": {
+            "type": "string"
+          }
+        },
+        "email": {
+          "type": "string",
+          "description": "The email address of the user.",
+          "format": "email"
+        },
+        "phoneNumber": {
+          "type": "string",
+          "description": "The phone number of the user."
+        },
+        "city": {
+          "type": "string",
+          "description": "The city where the user is located."
+        },
+        "speciality": {
+          "type": "string",
+          "description": "The medical speciality of the doctor. Only applicable if the user is a doctor."
+        },
+        "profilePictureUrl": {
+          "type": "string",
+          "description": "URL of the user's profile picture.",
+          "format": "uri"
+        }
+      },
+      "required": [
+        "id",
+        "firstName",
+        "lastName",
+        "role",
+        "email",
+        "phoneNumber",
+        "city"
+      ]
+    },
+    "Request": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Request",
+      "type": "object",
+      "description": "Represents a medical service request from a patient.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the request."
+        },
+        "patientId": {
+          "type": "string",
+          "description": "Reference to the Patient who created the request. (Relationship: Patient 1:N Request)"
+        },
+        "doctorId": {
+          "type": "string",
+          "description": "Reference to the Doctor assigned to the request. Can be null if not yet assigned. (Relationship: Doctor 1:N Request)"
+        },
+        "requestDate": {
+          "type": "string",
+          "description": "The date and time the request was created.",
+          "format": "date-time"
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the request (pending, accepted, en route, completed).",
+          "format": "enum",
+          "items": {
+            "type": "string"
+          }
+        },
+        "problemDescription": {
+          "type": "string",
+          "description": "Description of the medical problem."
+        },
+        "address": {
+          "type": "string",
+          "description": "The address where the service is requested."
+        },
+        "latitude": {
+          "type": "number",
+          "description": "Latitude coordinate of the request location."
+        },
+        "longitude": {
+          "type": "number",
+          "description": "Longitude coordinate of the request location."
+        }
+      },
+      "required": [
+        "id",
+        "patientId",
+        "requestDate",
+        "status",
+        "problemDescription",
+        "address",
+        "latitude",
+        "longitude"
+      ]
+    },
+    "Rating": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Rating",
+      "type": "object",
+      "description": "Represents a rating given by a patient to a doctor after a service.",
+      "properties": {
+        "doctorId": {
+          "type": "string",
+          "description": "Reference to the Doctor being rated. (Relationship: Doctor 1:N Rating)"
+        },
+        "patientId": {
+          "type": "string",
+          "description": "Reference to the Patient giving the rating. (Relationship: Patient 1:N Rating)"
+        },
+        "score": {
+          "type": "number",
+          "description": "The rating score (1-5).",
+          "format": "integer"
+        },
+        "comment": {
+          "type": "string",
+          "description": "Optional comment accompanying the rating."
+        },
+        "date": {
+          "type": "string",
+          "description": "The date the rating was given.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "doctorId",
+        "patientId",
+        "score",
+        "date"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user data, including personal information, role (patient/doctor), and contact details.  Uses path-based ownership for private user data.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/requests/{requestId}",
+        "definition": {
+          "entityName": "Request",
+          "schema": {
+            "$ref": "#/backend/entities/Request"
+          },
+          "description": "Stores medical service requests. Includes `patientId` and `doctorId` for associating requests with users.",
+          "params": [
+            {
+              "name": "requestId",
+              "description": "The unique identifier of the request."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/ratings/{ratingId}",
+        "definition": {
+          "entityName": "Rating",
+          "schema": {
+            "$ref": "#/backend/entities/Rating"
+          },
+          "description": "Stores ratings given by patients to doctors. Includes `doctorId` and `patientId` for associating ratings with users.",
+          "params": [
+            {
+              "name": "ratingId",
+              "description": "The unique identifier of the rating (combination of doctorId and patientId)."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore data structure is designed to support the DoctorAtHome application's features, focusing on user management, appointment requests, and doctor ratings. The structure prioritizes authorization independence by avoiding hierarchical `get()` calls in security rules. This is achieved by leveraging path-based ownership for user-specific data and membership maps where collaboration is required. Segregation is applied to separate user data based on roles (patient/doctor). Each collection enforces a homogeneous security posture, simplifying rules and enhancing security. The structure also supports the required QAPs through segregation of data and the use of consistent access modeling."
+  }
+}

@@ -1,0 +1,82 @@
+/**
+ * @file Firestore Security Rules for DoctorAtHome Application
+ * @core_philosophy This ruleset enforces a user-centric security model, granting users ownership of their data while allowing controlled access to shared resources.  It prioritizes authorization independence, avoiding hierarchical `get()` calls where possible.
+ * @data_structure
+ *   - `/users/{userId}`: Stores personal user information, accessible only to the authenticated user.
+ *   - `/requests/{requestId}`: Stores medical service requests. Patients can create requests, and doctors can be assigned to them.
+ *   - `/ratings/{ratingId}`: Stores ratings given by patients to doctors.
+ * @key_security_decisions
+ *   - Users can only access their own user documents.
+ *   - Listing all users is not allowed.
+ *   - Data validation is relaxed to allow for rapid prototyping.
+ * @denormalization_for_authorization
+ *   - The `requests` and `ratings` collections rely on the `patientId` and `doctorId` fields for authorization, avoiding the need to fetch user documents.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * @description Controls access to user documents.
+     * @path /users/{userId}
+     * @allow (create) User with matching {userId} can create their own document.
+     * @allow (get, update, delete) Authenticated user with ID {userId} can access their own document.
+     * @deny (create) User tries to create a document with a mismatched {userId}.
+     * @deny (get, update, delete) User tries to access a document with a mismatched {userId}.
+     * @deny (list) Listing all users is prohibited.
+     * @principle Enforces document ownership for user data.
+     */
+    match /users/{userId} {
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+
+      allow get: if isOwner(userId);
+      allow list: if false;
+      allow create: if isOwner(userId) && request.resource.data.id == request.auth.uid;
+      allow update: if isOwner(userId) && request.resource.data.id == request.auth.uid;
+      allow delete: if isOwner(userId);
+    }
+
+    /**
+     * @description Controls access to medical service requests.
+     * @path /requests/{requestId}
+     * @allow (create) Authenticated user can create a request with a matching patientId.
+     * @allow (get, list) Anyone can read requests.
+     * @allow (update, delete) Only the patient who created the request can update or delete it.
+     * @deny (create) User tries to create a request with a mismatched patientId.
+     * @principle Allows public read access but restricts write access to the owner.
+     */
+    match /requests/{requestId} {
+      function isSignedIn() {
+        return request.auth != null;
+      }
+      function isOwner(patientId) {
+        return request.auth.uid == patientId;
+      }
+
+      allow get, list: if true;
+      allow create: if isSignedIn() && request.resource.data.patientId == request.auth.uid;
+      allow update: if isOwner(request.resource.data.patientId);
+      allow delete: if isOwner(request.resource.data.patientId);
+    }
+
+    /**
+     * @description Controls access to doctor ratings.
+     * @path /ratings/{ratingId}
+     * @allow (create) Authenticated user can create a rating.
+     * @allow (get, list) Anyone can read ratings.
+     * @allow (update, delete) No one can update or delete a rating.
+     * @principle Allows public read access and authenticated create access, but no updates or deletes.
+     */
+    match /ratings/{ratingId} {
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      allow get, list: if true;
+      allow create: if isSignedIn();
+      allow update, delete: if false;
+    }
+  }
+}

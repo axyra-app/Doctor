@@ -72,7 +72,7 @@ export function MainSidebar({ user }: MainSidebarProps) {
         <SidebarMenu>
           {navItems.map((item) => (
             <SidebarMenuItem key={item.href}>
-              <Link href={item.href} legacyBehavior passHref>
+              <Link href={item.href}>
                 <SidebarMenuButton
                   isActive={pathname === item.href}
                   tooltip={item.label}
@@ -88,7 +88,7 @@ export function MainSidebar({ user }: MainSidebarProps) {
       <SidebarFooter className="border-t border-sidebar-border">
          <SidebarMenu>
            <SidebarMenuItem>
-              <Link href="/profile" legacyBehavior passHref>
+              <Link href="/profile">
                 <SidebarMenuButton isActive={pathname === '/profile'} tooltip="Perfil">
                   <User />
                   <span>Perfil</span>

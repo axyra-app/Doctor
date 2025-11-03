@@ -77,7 +77,7 @@ export default function LoginPage() {
   }
 
   // Muestra el spinner si el AuthProvider está cargando o si ya hay un usuario y estamos a punto de redirigir.
-  if (authLoading || user) {
+  if (authLoading && !form.formState.isSubmitting) {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
         <Loader2 className="h-10 w-10 animate-spin text-primary" />
@@ -126,8 +126,8 @@ export default function LoginPage() {
             {errorMessage && (
               <p className="text-sm font-medium text-destructive">{errorMessage}</p>
             )}
-            <Button type="submit" className="w-full" disabled={authLoading}>
-              {authLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
+              {form.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Iniciar sesión
             </Button>
           </form>

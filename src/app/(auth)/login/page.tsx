@@ -15,7 +15,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { useAuth, initiateEmailSignIn } from '@/firebase';
+import { useAuth } from '@/firebase';
 import Link from 'next/link';
 import { Logo } from '@/components/icons';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -32,10 +32,9 @@ const formSchema = z.object({
 export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const firebaseAuth = useAuth();
-  const { user, loading: authLoading } = useAppAuth();
+  const { user, loading: authLoading, setLoading: setAuthLoading } = useAppAuth();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -46,24 +45,24 @@ export default function LoginPage() {
   });
 
   useEffect(() => {
+    // Si la autenticación ha terminado y tenemos un usuario, redirigir.
     if (!authLoading && user) {
       router.replace('/dashboard');
     }
   }, [user, authLoading, router]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    setIsLoading(true);
+    setAuthLoading(true);
     setErrorMessage('');
     try {
       await signInWithEmailAndPassword(firebaseAuth, values.email, values.password);
-      // The useEffect above will handle the redirect on successful login
+      // El useEffect se encargará de la redirección cuando 'user' y 'authLoading' se actualicen.
       toast({
         title: 'Inicio de sesión exitoso',
         description: 'Serás redirigido al panel de control.',
       });
-      // The redirect is now handled by the useEffect hook watching the `user` state.
     } catch (error: any) {
-      setIsLoading(false);
+      setAuthLoading(false); // Detener la carga en caso de error
       let message = 'Ha ocurrido un error inesperado.';
       if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
         message = 'El correo electrónico o la contraseña son incorrectos.';
@@ -77,6 +76,7 @@ export default function LoginPage() {
     }
   }
 
+  // Muestra el spinner si el AuthProvider está cargando o si ya hay un usuario y estamos a punto de redirigir.
   if (authLoading || user) {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
@@ -126,8 +126,8 @@ export default function LoginPage() {
             {errorMessage && (
               <p className="text-sm font-medium text-destructive">{errorMessage}</p>
             )}
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            <Button type="submit" className="w-full" disabled={authLoading}>
+              {authLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Iniciar sesión
             </Button>
           </form>

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, useState, ReactNode, Dispatch, SetStateAction } from 'react';
 import { useUser } from '@/firebase';
 import type { UserProfile } from '@/types';
 import { doc, getDoc } from 'firebase/firestore';
@@ -10,6 +10,7 @@ import { User } from 'firebase/auth';
 interface AuthContextType {
   user: UserProfile | null;
   loading: boolean;
+  setLoading: Dispatch<SetStateAction<boolean>>;
   logout: () => Promise<void>;
 }
 
@@ -23,14 +24,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const fetchUserProfile = async (user: User) => {
+      // No iniciar carga si ya estamos cargando
+      if (!loading) setLoading(true);
       const userDocRef = doc(firestore, 'users', user.uid);
-      const userDoc = await getDoc(userDocRef);
-      if (userDoc.exists()) {
-        setUserProfile({ uid: user.uid, ...userDoc.data() } as UserProfile);
-      } else {
+      try {
+        const userDoc = await getDoc(userDocRef);
+        if (userDoc.exists()) {
+          setUserProfile({ uid: user.uid, ...userDoc.data() } as UserProfile);
+        } else {
+          // Si el perfil no existe en Firestore, aún podemos tener un usuario de Firebase
+          // pero sin perfil completo. Deslogueamos o manejamos el caso.
+          setUserProfile(null);
+        }
+      } catch (error) {
+        console.error("Error fetching user profile:", error);
         setUserProfile(null);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
     if (isUserLoading) {
@@ -41,18 +52,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUserProfile(null);
       setLoading(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [firebaseUser, isUserLoading, firestore]);
 
   const logout = async () => {
-    // The actual sign out is handled by Firebase Auth listener,
-    // but we can clear the profile state here.
     setUserProfile(null);
-    // You might need to call a sign-out function from your firebase auth hook
-    // e.g., (await import('@/firebase')).auth.signOut();
   };
 
   return (
-    <AuthContext.Provider value={{ user: userProfile, loading, logout }}>
+    <AuthContext.Provider value={{ user: userProfile, loading, setLoading, logout }}>
       {children}
     </AuthContext.Provider>
   );

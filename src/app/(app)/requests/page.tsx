@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import type { AppointmentRequest, RequestStatus } from "@/types";
 import { Clock, CheckCircle, Truck, XCircle, MoreHorizontal } from "lucide-react";
 import React from "react";
+import { Button } from "@/components/ui/button";
 
 const mockRequests: AppointmentRequest[] = [
   { id: '1', patientId: 'p1', doctorId: 'd1', requestDate: Date.now() - 3600000, status: 'accepted', description: 'Fiebre alta y dolor de cabeza', address: 'Calle Falsa 123' },

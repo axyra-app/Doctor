@@ -46,9 +46,12 @@ export default function LoginPage() {
   });
 
   useEffect(() => {
-    // Si la autenticación ha terminado y tenemos un usuario, redirigir al dashboard.
     if (!authLoading && user) {
-      router.replace('/dashboard');
+      if (user.role === 'doctor') {
+        router.replace('/dashboard');
+      } else {
+        router.replace('/dashboard');
+      }
     }
   }, [user, authLoading, router]);
 
@@ -57,14 +60,11 @@ export default function LoginPage() {
     setErrorMessage('');
     try {
       await signInWithEmailAndPassword(firebaseAuth, values.email, values.password);
-      
+      // The useEffect will handle the redirection once the user state is updated.
       toast({
         title: 'Inicio de sesión exitoso',
-        description: 'Serás redirigido al panel de control.',
+        description: 'Serás redirigido a tu panel de control.',
       });
-      // Redirección explícita después del éxito.
-      router.push('/dashboard');
-
     } catch (error: any) {
       let message = 'Ha ocurrido un error inesperado.';
       if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
@@ -81,7 +81,6 @@ export default function LoginPage() {
     }
   }
 
-  // Muestra el spinner si el AuthProvider está cargando (comprobación inicial) o si ya hay un usuario y estamos a punto de redirigir.
   if (authLoading && !isSubmitting) {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
@@ -109,7 +108,7 @@ export default function LoginPage() {
                 <FormItem>
                   <FormLabel>Correo electrónico</FormLabel>
                   <FormControl>
-                    <Input placeholder="tu@email.com" {...field} disabled={isSubmitting} />
+                    <Input placeholder="tu@email.com" {...field} disabled={isSubmitting || authLoading} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -122,7 +121,7 @@ export default function LoginPage() {
                 <FormItem>
                   <FormLabel>Contraseña</FormLabel>
                   <FormControl>
-                    <Input type="password" placeholder="••••••••" {...field} disabled={isSubmitting} />
+                    <Input type="password" placeholder="••••••••" {...field} disabled={isSubmitting || authLoading} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -131,8 +130,8 @@ export default function LoginPage() {
             {errorMessage && (
               <p className="text-sm font-medium text-destructive">{errorMessage}</p>
             )}
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
-              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            <Button type="submit" className="w-full" disabled={isSubmitting || authLoading}>
+              {(isSubmitting || authLoading) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Iniciar sesión
             </Button>
           </form>

@@ -15,13 +15,13 @@ import {
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { initiateEmailSignIn, useAuth } from '@/firebase';
+import { initiateEmailSignIn, useUser } from '@/firebase';
 import Link from 'next/link';
 import { Logo } from '@/components/icons';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useState, useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
-import { useUser } from '@/firebase';
+import { useAuth as useFirebaseAuth } from '@/firebase';
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Por favor, introduce un correo electrónico válido.' }),
@@ -32,7 +32,7 @@ export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const auth = useAuth();
+  const firebaseAuth = useFirebaseAuth();
   const { user, isUserLoading } = useUser();
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -45,7 +45,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (!isUserLoading && user) {
-      router.push('/dashboard');
+      router.replace('/dashboard');
     }
   }, [user, isUserLoading, router]);
 
@@ -53,9 +53,21 @@ export default function LoginPage() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     try {
-      initiateEmailSignIn(auth, values.email, values.password);
-      // The onAuthStateChanged listener in the provider will handle the redirect
+      // We are not awaiting this call. The auth state change will be detected
+      // by the useUser hook and the useEffect above will handle the redirect.
+      initiateEmailSignIn(firebaseAuth, values.email, values.password);
+      
+      // We can show a toast for feedback, but the redirect is handled elsewhere.
+      toast({
+        title: 'Iniciando sesión...',
+        description: 'Serás redirigido en un momento.',
+      });
+
     } catch (error: any) {
+      // This catch block might not be reached for auth errors if not awaited,
+      // but it's good for catching other potential issues.
+      // Firebase auth errors are typically handled by listening to onAuthStateChanged.
+      // For a better UX, a global error listener could show auth-specific toasts.
       toast({
         variant: 'destructive',
         title: 'Error al iniciar sesión',
@@ -63,8 +75,10 @@ export default function LoginPage() {
       });
       setIsLoading(false);
     }
+    // Don't set isLoading to false immediately. Let the redirect handle the view change.
   }
 
+  // Show a loading spinner while checking auth state or if the user is already logged in and redirecting.
   if (isUserLoading || user) {
     return (
       <div className="flex h-screen items-center justify-center bg-background">

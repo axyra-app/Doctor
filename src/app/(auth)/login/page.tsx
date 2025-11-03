@@ -15,7 +15,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/firebase';
+import { useAuth as useFirebaseAuth } from '@/firebase';
 import Link from 'next/link';
 import { Logo } from '@/components/icons';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -32,9 +32,10 @@ const formSchema = z.object({
 export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const firebaseAuth = useFirebaseAuth();
+  const { user, loading: authLoading } = useAppAuth();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  const firebaseAuth = useAuth();
-  const { user, loading: authLoading, setLoading: setAuthLoading } = useAppAuth();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -45,24 +46,24 @@ export default function LoginPage() {
   });
 
   useEffect(() => {
-    // Si la autenticación ha terminado y tenemos un usuario, redirigir.
+    // Si la autenticación ha terminado y tenemos un usuario, redirigir al dashboard.
     if (!authLoading && user) {
       router.replace('/dashboard');
     }
   }, [user, authLoading, router]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    setAuthLoading(true);
+    setIsSubmitting(true);
     setErrorMessage('');
     try {
       await signInWithEmailAndPassword(firebaseAuth, values.email, values.password);
-      // El useEffect se encargará de la redirección cuando 'user' y 'authLoading' se actualicen.
+      // El useEffect se encargará de la redirección cuando 'user' se actualice.
+      // El AuthProvider manejará el estado de carga global.
       toast({
         title: 'Inicio de sesión exitoso',
         description: 'Serás redirigido al panel de control.',
       });
     } catch (error: any) {
-      setAuthLoading(false); // Detener la carga en caso de error
       let message = 'Ha ocurrido un error inesperado.';
       if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
         message = 'El correo electrónico o la contraseña son incorrectos.';
@@ -73,11 +74,13 @@ export default function LoginPage() {
         title: 'Error al iniciar sesión',
         description: message,
       });
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
-  // Muestra el spinner si el AuthProvider está cargando o si ya hay un usuario y estamos a punto de redirigir.
-  if (authLoading && !form.formState.isSubmitting) {
+  // Muestra el spinner si el AuthProvider está cargando (comprobación inicial) o si ya hay un usuario y estamos a punto de redirigir.
+  if (authLoading && !isSubmitting) {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
         <Loader2 className="h-10 w-10 animate-spin text-primary" />
@@ -104,7 +107,7 @@ export default function LoginPage() {
                 <FormItem>
                   <FormLabel>Correo electrónico</FormLabel>
                   <FormControl>
-                    <Input placeholder="tu@email.com" {...field} />
+                    <Input placeholder="tu@email.com" {...field} disabled={isSubmitting} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -117,7 +120,7 @@ export default function LoginPage() {
                 <FormItem>
                   <FormLabel>Contraseña</FormLabel>
                   <FormControl>
-                    <Input type="password" placeholder="••••••••" {...field} />
+                    <Input type="password" placeholder="••••••••" {...field} disabled={isSubmitting} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -126,8 +129,8 @@ export default function LoginPage() {
             {errorMessage && (
               <p className="text-sm font-medium text-destructive">{errorMessage}</p>
             )}
-            <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
-              {form.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            <Button type="submit" className="w-full" disabled={isSubmitting}>
+              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Iniciar sesión
             </Button>
           </form>

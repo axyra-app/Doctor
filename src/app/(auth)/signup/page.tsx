@@ -58,7 +58,8 @@ export default function SignupPage() {
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
       const user = userCredential.user;
 
-      const userProfile: Omit<UserProfile, 'uid'> = {
+      const userProfile: UserProfile = {
+        uid: user.uid,
         firstName: values.firstName,
         lastName: values.lastName,
         email: user.email,

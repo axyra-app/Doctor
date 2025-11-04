@@ -6,7 +6,7 @@ export default function SuggestDoctorsPage() {
     <div className="max-w-4xl mx-auto">
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl">Asistente de Búsqueda de Doctores</CardTitle>
+          <CardTitle className="text-xl md:text-2xl">Asistente de Búsqueda de Doctores</CardTitle>
           <CardDescription>
             Utiliza nuestra IA para encontrar el doctor óptimo para tus necesidades. Completa los siguientes campos para obtener una lista de sugerencias.
           </CardDescription>

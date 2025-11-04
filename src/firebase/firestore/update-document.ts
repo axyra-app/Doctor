@@ -1,7 +1,8 @@
-import { doc, updateDoc, getFirestore } from 'firebase/firestore';
-import { app } from '@/firebase'; // Assuming your Firebase app instance is exported from here
+'use client';
+import { doc, updateDoc } from 'firebase/firestore';
+import { initializeFirebase } from '@/firebase';
 
-const firestore = getFirestore(app);
+const { firestore } = initializeFirebase();
 
 /**
  * Updates a document in a Firestore collection.

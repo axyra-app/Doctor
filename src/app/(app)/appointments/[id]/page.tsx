@@ -9,13 +9,14 @@ import { updateDocument } from '@/firebase/firestore/update-document';
 import { useAuth } from '@/hooks/use-auth-provider';
 import { useUser } from '@/hooks/use-user';
 import { Loader2, User, MapPin, Calendar, CheckCircle, ShieldCheck, Stethoscope } from 'lucide-react';
-import { toast } from '@/components/ui/use-toast';
+import { useToast } from '@/components/ui/toast';
 import { useRouter } from 'next/navigation';
 
 export default function AppointmentDetailsPage() {
   const { id: appointmentId } = useParams();
   const { user: currentUser } = useAuth();
   const router = useRouter();
+  const { toast } = useToast();
 
   const { data: appointment, isLoading, error } = useDocument<AppointmentRequest>(
     `appointments/${appointmentId}`

@@ -14,6 +14,7 @@ export interface UserProfile {
 }
 
 export type RequestStatus = 'pending' | 'accepted' | 'en-route' | 'completed' | 'cancelled';
+export type AppointmentStatus = RequestStatus;
 
 export interface AppointmentRequest {
   id: string;

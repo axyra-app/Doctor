@@ -3,9 +3,10 @@
 import { useAuth } from '@/hooks/use-auth-provider';
 import { useAppointments } from '@/hooks/use-appointments';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Loader2, ArrowRight, MapPin, User, CalendarCheck } from 'lucide-react';
+import { Loader2, ArrowRight, MapPin, CalendarCheck } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import PatientName from '@/components/patient-name'; // Importar el nuevo componente
 
 export default function AppointmentsHistoryPage() {
   const { user } = useAuth();
@@ -37,10 +38,8 @@ export default function AppointmentsHistoryPage() {
                   className="flex flex-wrap items-center justify-between gap-4 rounded-md border p-4 bg-card hover:bg-secondary/80 transition-colors"
                 >
                   <div className="space-y-2">
-                    <p className="font-medium flex items-center">
-                      <User className="mr-2 h-4 w-4 text-primary" />
-                      {req.patientName}
-                    </p>
+                    {/* Usar el nuevo componente PatientName */}
+                    <PatientName patientId={req.patientId} />
                     <p className="flex items-center text-sm text-muted-foreground">
                       <MapPin className="mr-2 h-4 w-4 text-primary" />
                       {req.address}

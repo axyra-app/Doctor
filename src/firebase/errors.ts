@@ -1,5 +1,6 @@
 'use client';
 import { getAuth, type User } from 'firebase/auth';
+import type { FirestoreErrorCode } from 'firebase/firestore';
 
 type SecurityRuleContext = {
   path: string;
@@ -113,13 +114,13 @@ ${JSON.stringify(requestObject, null, 2)}`;
  */
 export class FirestorePermissionError extends Error {
   public readonly request: SecurityRuleRequest;
-  public readonly code: string;
+  public readonly code: FirestoreErrorCode;
 
   constructor(context: SecurityRuleContext) {
     const requestObject = buildRequestObject(context);
     super(buildErrorMessage(requestObject));
     this.name = 'FirebaseError';
     this.request = requestObject;
-    this.code = 'permission-denied';
+    this.code = 'permission-denied' as FirestoreErrorCode;
   }
   }

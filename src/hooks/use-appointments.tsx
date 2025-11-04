@@ -1,10 +1,10 @@
 'use client';
 
-import { useMemo } from 'react';
-import { collection, query, where, DocumentData } from 'firebase/firestore';
 import { useFirestore } from '@/firebase';
 import { useCollection, WithId } from '@/firebase/firestore/use-collection';
 import { AppointmentRequest, AppointmentStatus, UserRole } from '@/types';
+import { collection, query, where, type DocumentData } from 'firebase/firestore';
+import { useMemo } from 'react';
 
 // A hook to fetch appointments based on user role.
 export function useAppointments(userRole: UserRole, uid?: string, status?: AppointmentStatus | AppointmentStatus[]) {
@@ -12,7 +12,7 @@ export function useAppointments(userRole: UserRole, uid?: string, status?: Appoi
 
   const appointmentsCollection = useMemo(() => {
     if (!firestore) return null;
-    return collection(firestore, 'appointments') as DocumentData;
+    return collection(firestore, 'appointments');
   }, [firestore]);
 
   const appointmentsQuery = useMemo(() => {
@@ -39,8 +39,6 @@ export function useAppointments(userRole: UserRole, uid?: string, status?: Appoi
       q = query(q, where('doctorId', '==', uid));
     }
 
-    // To prevent "useMemo" errors, I will mark the query as memoized.
-    (q as any).__memo = true;
     return q;
   }, [appointmentsCollection, userRole, uid, status]);
 

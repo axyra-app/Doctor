@@ -123,4 +123,4 @@ export class FirestorePermissionError extends Error {
     this.request = requestObject;
     this.code = 'permission-denied' as FirestoreErrorCode;
   }
-  }
+}

@@ -4,7 +4,7 @@ export interface UserProfile {
   uid: string;
   email: string | null;
   firstName: string;
-  lastName:string;
+  lastName: string;
   role: UserRole;
   phone?: string;
   city?: string;

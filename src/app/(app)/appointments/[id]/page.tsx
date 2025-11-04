@@ -9,14 +9,13 @@ import { updateDocument } from '@/firebase/firestore/update-document';
 import { useAuth } from '@/hooks/use-auth-provider';
 import { useUser } from '@/hooks/use-user';
 import { Loader2, User, MapPin, Calendar, CheckCircle, ShieldCheck, Stethoscope } from 'lucide-react';
-import { useToast } from '@/components/ui/toast';
+import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 
 export default function AppointmentDetailsPage() {
   const { id: appointmentId } = useParams();
   const { user: currentUser } = useAuth();
   const router = useRouter();
-  const { toast } = useToast();
 
   const { data: appointment, isLoading, error } = useDocument<AppointmentRequest>(
     `appointments/${appointmentId}`
@@ -33,10 +32,10 @@ export default function AppointmentDetailsPage() {
         status: 'accepted',
         doctorId: currentUser.uid,
       });
-      toast({ title: 'Cita Aceptada', description: 'La cita ha sido asignada y notificada al paciente.' });
+      toast.success('Cita Aceptada', { description: 'La cita ha sido asignada y notificada al paciente.' });
       router.push('/dashboard');
     } catch (err) {
-      toast({ title: 'Error', description: 'Hubo un problema al aceptar la cita.', variant: 'destructive' });
+      toast.error('Error', { description: 'Hubo un problema al aceptar la cita.' });
     }
   };
 
@@ -45,10 +44,10 @@ export default function AppointmentDetailsPage() {
 
     try {
       await updateDocument('appointments', appointment.id, { status: 'completed' });
-      toast({ title: 'Cita Completada', description: 'La cita ha sido marcada como completada.' });
+      toast.success('Cita Completada', { description: 'La cita ha sido marcada como completada.' });
       router.push('/dashboard');
     } catch (err) {
-      toast({ title: 'Error', description: 'Hubo un problema al completar la cita.', variant: 'destructive' });
+      toast.error('Error', { description: 'Hubo un problema al completar la cita.' });
     }
   };
 

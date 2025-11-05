@@ -6,7 +6,7 @@
     "dev": "next dev --turbopack -p 9002",
     "genkit:dev": "genkit start -- tsx src/ai/dev.ts",
     "genkit:watch": "genkit start -- tsx --watch src/ai/dev.ts",
-    "build": "node -e \"try{require('fs').rmSync('out',{recursive:true,force:true})}catch(e){};const cp=require('child_process');const r=cp.spawnSync('npx',['next','build'],{stdio:'inherit',env:Object.assign({},process.env,{NODE_ENV:'production'})});process.exit(r.status);\"",
+    "build": "next build",
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit"

@@ -29,10 +29,10 @@ export function DoctorDashboard() {
     undefined,
     'pending'
   );
-  // Fetch accepted appointments for the current doctor
+  // Fetch accepted appointments for the current doctor (only if user is available)
   const { data: acceptedAppointments, isLoading: isLoadingAccepted } = useAppointments(
     'doctor',
-    user?.uid,
+    user?.uid || undefined,
     'accepted'
   );
 

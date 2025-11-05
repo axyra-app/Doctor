@@ -32,7 +32,7 @@ export function PatientDashboard() {
   const { user } = useAuth();
   const { data: recentRequests, isLoading } = useAppointments(
     'patient',
-    user?.uid
+    user?.uid || undefined
   );
   const heroImage = PlaceHolderImages.find((img) => img.id === 'patient-banner');
 
@@ -131,7 +131,7 @@ export function PatientDashboard() {
                     >
                       {statusMap[req.status] || req.status}
                     </span>
-                    <Link href={`/requests/${req.id}`} passHref>
+                    <Link href={`/appointments/${req.id}`}>
                       <Button variant="ghost" size="icon">
                         <ArrowRight className="h-4 w-4" />
                       </Button>

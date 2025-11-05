@@ -24,11 +24,16 @@ export interface AppointmentRequest {
   status: RequestStatus;
   description: string;
   address: string;
+  specialty?: string; // Medical specialty required
+  urgency?: 'low' | 'medium' | 'high' | 'emergency'; // Urgency level
+  contactPhone?: string; // Contact phone number
+  additionalNotes?: string; // Additional notes or instructions
   location?: {
     lat: number;
     lng: number;
   };
   patient?: UserProfile; // denormalized for convenience
+  doctor?: UserProfile; // denormalized for convenience
 }
 
 export interface Rating {

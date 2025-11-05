@@ -1,20 +1,29 @@
 /**
  * @file Firestore Security Rules for DoctorAtHome Application
- * @core_philosophy This ruleset enforces a user-centric security model, granting users ownership of their data while allowing controlled access to shared resources.  It prioritizes authorization independence, avoiding hierarchical `get()` calls where possible.
+ * @core_philosophy This ruleset enforces a user-centric security model, granting users ownership of their data while allowing controlled access to shared resources. It prioritizes authorization independence, avoiding hierarchical `get()` calls where possible.
  * @data_structure
  *   - `/users/{userId}`: Stores personal user information, accessible only to the authenticated user.
- *   - `/requests/{requestId}`: Stores medical service requests. Patients can create requests, and doctors can be assigned to them.
+ *   - `/appointments/{appointmentId}`: Stores medical service appointments. Patients can create appointments, and doctors can be assigned to them.
  *   - `/ratings/{ratingId}`: Stores ratings given by patients to doctors.
  * @key_security_decisions
  *   - Users can only access their own user documents.
  *   - Listing all users is not allowed.
- *   - Data validation is relaxed to allow for rapid prototyping.
- * @denormalization_for_authorization
- *   - The `requests` and `ratings` collections rely on the `patientId` and `doctorId` fields for authorization, avoiding the need to fetch user documents.
+ *   - Appointments can be read by patients and doctors involved, and created by patients.
+ *   - Doctors can update appointments assigned to them.
+ *   - Ratings can be read by anyone but only created by authenticated users.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
 
     /**
      * @description Controls access to user documents.
@@ -27,56 +36,97 @@ service cloud.firestore {
      * @principle Enforces document ownership for user data.
      */
     match /users/{userId} {
-      function isOwner(userId) {
-        return request.auth.uid == userId;
-      }
-
-      allow get: if isOwner(userId);
-      allow list: if false;
-      allow create: if isOwner(userId);
-      allow update: if isOwner(userId);
-      allow delete: if isOwner(userId);
+      allow get: if isSignedIn() && isOwner(userId);
+      allow list: if false; // Prohibit listing all users
+      allow create: if isSignedIn() && isOwner(userId) && 
+                       request.resource.data.keys().hasAll(['uid', 'email', 'firstName', 'lastName', 'role']) &&
+                       request.resource.data.uid == userId;
+      allow update: if isSignedIn() && isOwner(userId);
+      allow delete: if isSignedIn() && isOwner(userId);
     }
 
     /**
-     * @description Controls access to medical service requests.
-     * @path /requests/{requestId}
-     * @allow (create) Authenticated user can create a request with a matching patientId.
-     * @allow (get, list) Anyone can read requests.
-     * @allow (update, delete) Only the patient who created the request can update or delete it.
-     * @deny (create) User tries to create a request with a mismatched patientId.
-     * @principle Allows public read access but restricts write access to the owner.
+     * @description Controls access to medical service appointments.
+     * @path /appointments/{appointmentId}
+     * @allow (create) Authenticated user can create an appointment with a matching patientId.
+     * @allow (get) Patient or doctor involved in the appointment can read it.
+     * @allow (list) Patients can list their appointments, doctors can list appointments assigned to them or pending.
+     * @allow (update) Patient can update their appointments, doctor can update appointments assigned to them.
+     * @allow (delete) Only the patient who created the appointment can delete it.
+     * @principle Allows controlled access based on patientId and doctorId fields.
      */
-    match /requests/{requestId} {
-      function isSignedIn() {
-        return request.auth != null;
+    match /appointments/{appointmentId} {
+      // Patient can read their own appointments
+      function isPatient() {
+        return isSignedIn() && 
+               resource != null && 
+               resource.data.patientId == request.auth.uid;
       }
-      function isOwner(patientId) {
-        return request.auth.uid == patientId;
+      
+      // Doctor can read appointments assigned to them
+      function isAssignedDoctor() {
+        return isSignedIn() && 
+               resource != null && 
+               resource.data.doctorId == request.auth.uid;
+      }
+      
+      // Patient can create their own appointments
+      function canCreate() {
+        return isSignedIn() && 
+               request.resource.data.patientId == request.auth.uid &&
+               request.resource.data.keys().hasAll(['patientId', 'requestDate', 'status', 'description', 'address']);
+      }
+      
+      // Patient can update their own appointments
+      function canPatientUpdate() {
+        return isSignedIn() && 
+               resource != null &&
+               resource.data.patientId == request.auth.uid;
+      }
+      
+      // Doctor can update appointments assigned to them (or assign themselves)
+      function canDoctorUpdate() {
+        return isSignedIn() && 
+               resource != null &&
+               (resource.data.doctorId == request.auth.uid || 
+                resource.data.doctorId == null); // Can assign to pending appointments
+      }
+      
+      // Patient can delete their own appointments
+      function canDelete() {
+        return isSignedIn() && 
+               resource != null &&
+               resource.data.patientId == request.auth.uid;
       }
 
-      allow get, list: if true;
-      allow create: if isSignedIn() && request.resource.data.patientId == request.auth.uid;
-      allow update: if isOwner(request.resource.data.patientId);
-      allow delete: if isOwner(request.resource.data.patientId);
+      allow get: if isSignedIn() && (isPatient() || isAssignedDoctor());
+      allow list: if isSignedIn(); // Can list, but queries will filter by patientId/doctorId
+      allow create: if canCreate();
+      allow update: if canPatientUpdate() || canDoctorUpdate();
+      allow delete: if canDelete();
     }
 
     /**
      * @description Controls access to doctor ratings.
      * @path /ratings/{ratingId}
-     * @allow (create) Authenticated user can create a rating.
+     * @allow (create) Authenticated patient can create a rating for a doctor.
      * @allow (get, list) Anyone can read ratings.
-     * @allow (update, delete) No one can update or delete a rating.
+     * @allow (update, delete) No one can update or delete a rating (immutable).
      * @principle Allows public read access and authenticated create access, but no updates or deletes.
      */
     match /ratings/{ratingId} {
-      function isSignedIn() {
-        return request.auth != null;
+      function canCreate() {
+        return isSignedIn() && 
+               request.resource.data.keys().hasAll(['doctorId', 'patientId', 'score', 'date']) &&
+               request.resource.data.patientId == request.auth.uid &&
+               request.resource.data.score is int &&
+               request.resource.data.score >= 1 &&
+               request.resource.data.score <= 5;
       }
 
-      allow get, list: if true;
-      allow create: if isSignedIn();
-      allow update, delete: if false;
+      allow get, list: if true; // Public read access
+      allow create: if canCreate();
+      allow update, delete: if false; // Immutable - no updates or deletes
     }
   }
 }

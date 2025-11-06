@@ -25,82 +25,121 @@ service cloud.firestore {
       return request.auth.uid == userId;
     }
 
+    function getUserRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+
+    function isDoctor() {
+      return isSignedIn() && getUserRole() == 'doctor';
+    }
+
+    function isPatient() {
+      return isSignedIn() && getUserRole() == 'patient';
+    }
+
     /**
      * @description Controls access to user documents.
      * @path /users/{userId}
      * @allow (create) User with matching {userId} can create their own document.
-     * @allow (get, update, delete) Authenticated user with ID {userId} can access their own document.
-     * @deny (create) User tries to create a document with a mismatched {userId}.
-     * @deny (get, update, delete) User tries to access a document with a mismatched {userId}.
-     * @deny (list) Listing all users is prohibited.
-     * @principle Enforces document ownership for user data.
+     * @allow (get) Authenticated users can read any user document (for doctor/patient profiles).
+     * @allow (update) Authenticated user with ID {userId} can update their own document.
+     * @allow (delete) Authenticated user with ID {userId} can delete their own document.
+     * @deny (list) Listing all users is prohibited (use queries with filters instead).
+     * @principle Enforces document ownership for updates/deletes, but allows read access for profile viewing.
      */
     match /users/{userId} {
-      allow get: if isSignedIn() && isOwner(userId);
-      allow list: if false; // Prohibit listing all users
-      allow create: if isSignedIn() && isOwner(userId) && 
+      // Anyone signed in can read user profiles (needed for doctor/patient profiles)
+      allow get: if isSignedIn();
+      
+      // Prohibit listing all users - use queries with filters instead
+      allow list: if false;
+      
+      // User can create their own document with required fields
+      allow create: if isSignedIn() && 
+                       isOwner(userId) && 
                        request.resource.data.keys().hasAll(['uid', 'email', 'firstName', 'lastName', 'role']) &&
-                       request.resource.data.uid == userId;
-      allow update: if isSignedIn() && isOwner(userId);
+                       request.resource.data.uid == userId &&
+                       request.resource.data.role in ['patient', 'doctor'];
+      
+      // User can update their own document
+      allow update: if isSignedIn() && 
+                       isOwner(userId) &&
+                       // Prevent changing uid and role
+                       request.resource.data.uid == resource.data.uid &&
+                       request.resource.data.role == resource.data.role;
+      
+      // User can delete their own document
       allow delete: if isSignedIn() && isOwner(userId);
     }
 
     /**
      * @description Controls access to medical service appointments.
      * @path /appointments/{appointmentId}
-     * @allow (create) Authenticated user can create an appointment with a matching patientId.
+     * @allow (create) Authenticated patient can create an appointment with a matching patientId.
      * @allow (get) Patient or doctor involved in the appointment can read it.
      * @allow (list) Patients can list their appointments, doctors can list appointments assigned to them or pending.
-     * @allow (update) Patient can update their appointments, doctor can update appointments assigned to them.
+     * @allow (update) Patient can update their appointments (cancel), doctor can update appointments assigned to them.
      * @allow (delete) Only the patient who created the appointment can delete it.
      * @principle Allows controlled access based on patientId and doctorId fields.
      */
     match /appointments/{appointmentId} {
       // Patient can read their own appointments
-      function isPatient() {
+      function isAppointmentPatient() {
         return isSignedIn() && 
                resource != null && 
                resource.data.patientId == request.auth.uid;
       }
       
-      // Doctor can read appointments assigned to them
-      function isAssignedDoctor() {
+      // Doctor can read appointments assigned to them or pending appointments
+      function isAppointmentDoctor() {
         return isSignedIn() && 
                resource != null && 
-               resource.data.doctorId == request.auth.uid;
+               (resource.data.doctorId == request.auth.uid || resource.data.doctorId == null);
       }
       
       // Patient can create their own appointments
       function canCreate() {
         return isSignedIn() && 
+               isPatient() &&
                request.resource.data.patientId == request.auth.uid &&
-               request.resource.data.keys().hasAll(['patientId', 'requestDate', 'status', 'description', 'address']);
+               request.resource.data.keys().hasAll(['patientId', 'requestDate', 'status', 'description', 'address']) &&
+               request.resource.data.status == 'pending' &&
+               request.resource.data.requestDate is number &&
+               request.resource.data.requestDate > 0;
       }
       
-      // Patient can update their own appointments
+      // Patient can update their own appointments (e.g., cancel)
       function canPatientUpdate() {
         return isSignedIn() && 
+               isPatient() &&
                resource != null &&
-               resource.data.patientId == request.auth.uid;
+               resource.data.patientId == request.auth.uid &&
+               // Prevent changing patientId
+               request.resource.data.patientId == resource.data.patientId;
       }
       
-      // Doctor can update appointments assigned to them (or assign themselves)
+      // Doctor can update appointments assigned to them (or assign themselves to pending)
       function canDoctorUpdate() {
         return isSignedIn() && 
+               isDoctor() &&
                resource != null &&
                (resource.data.doctorId == request.auth.uid || 
-                resource.data.doctorId == null); // Can assign to pending appointments
+                (resource.data.doctorId == null && resource.data.status == 'pending')) &&
+               // If assigning, ensure doctorId matches
+               (request.resource.data.doctorId == request.auth.uid || 
+                request.resource.data.doctorId == resource.data.doctorId);
       }
       
       // Patient can delete their own appointments
       function canDelete() {
         return isSignedIn() && 
+               isPatient() &&
                resource != null &&
                resource.data.patientId == request.auth.uid;
       }
 
-      allow get: if isSignedIn() && (isPatient() || isAssignedDoctor());
-      allow list: if isSignedIn(); // Can list, but queries will filter by patientId/doctorId
+      allow get: if isSignedIn() && (isAppointmentPatient() || isAppointmentDoctor());
+      allow list: if isSignedIn(); // Can list, but queries will filter by patientId/doctorId/status
       allow create: if canCreate();
       allow update: if canPatientUpdate() || canDoctorUpdate();
       allow delete: if canDelete();
@@ -109,7 +148,7 @@ service cloud.firestore {
     /**
      * @description Controls access to doctor ratings.
      * @path /ratings/{ratingId}
-     * @allow (create) Authenticated patient can create a rating for a doctor.
+     * @allow (create) Authenticated patient can create a rating for a doctor after completing an appointment.
      * @allow (get, list) Anyone can read ratings.
      * @allow (update, delete) No one can update or delete a rating (immutable).
      * @principle Allows public read access and authenticated create access, but no updates or deletes.
@@ -117,15 +156,51 @@ service cloud.firestore {
     match /ratings/{ratingId} {
       function canCreate() {
         return isSignedIn() && 
-               request.resource.data.keys().hasAll(['doctorId', 'patientId', 'score', 'date']) &&
+               isPatient() &&
+               request.resource.data.keys().hasAll(['doctorId', 'patientId', 'score', 'date', 'comment']) &&
                request.resource.data.patientId == request.auth.uid &&
                request.resource.data.score is int &&
                request.resource.data.score >= 1 &&
-               request.resource.data.score <= 5;
+               request.resource.data.score <= 5 &&
+               request.resource.data.comment is string &&
+               request.resource.data.comment.size() > 0 &&
+               request.resource.data.date is number &&
+               request.resource.data.date > 0;
       }
 
       allow get, list: if true; // Public read access
       allow create: if canCreate();
+      allow update, delete: if false; // Immutable - no updates or deletes
+    }
+
+    /**
+     * @description Controls access to chat messages within appointments.
+     * @path /appointments/{appointmentId}/messages/{messageId}
+     * @allow (create, read) Patient or doctor involved in the appointment can send and read messages.
+     * @allow (update, delete) No one can update or delete messages (immutable).
+     */
+    match /appointments/{appointmentId}/messages/{messageId} {
+      function isAppointmentParticipant() {
+        return isSignedIn() && 
+               resource != null &&
+               (resource.data.senderId == request.auth.uid ||
+                get(/databases/$(database)/documents/appointments/$(appointmentId)).data.patientId == request.auth.uid ||
+                get(/databases/$(database)/documents/appointments/$(appointmentId)).data.doctorId == request.auth.uid);
+      }
+
+      function canCreateMessage() {
+        return isSignedIn() && 
+               request.resource.data.keys().hasAll(['senderId', 'text', 'timestamp']) &&
+               request.resource.data.senderId == request.auth.uid &&
+               request.resource.data.text is string &&
+               request.resource.data.text.size() > 0 &&
+               // Verify sender is part of the appointment
+               (get(/databases/$(database)/documents/appointments/$(appointmentId)).data.patientId == request.auth.uid ||
+                get(/databases/$(database)/documents/appointments/$(appointmentId)).data.doctorId == request.auth.uid);
+      }
+
+      allow get, list: if isAppointmentParticipant();
+      allow create: if canCreateMessage();
       allow update, delete: if false; // Immutable - no updates or deletes
     }
   }

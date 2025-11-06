@@ -1,18 +1,15 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
-import { GoogleMap, Marker, useJsApiLoader } from '@react-google-maps/api';
+import Map, { Marker, MapRef } from 'react-map-gl';
+import 'mapbox-gl/dist/mapbox-gl.css';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Loader2, MapPin, Navigation, Search } from 'lucide-react';
-import { GOOGLE_MAPS_API_KEY, MAP_DEFAULT_CENTER, geocodeAddress } from '@/lib/google-maps';
+import { MAPBOX_ACCESS_TOKEN, MAP_DEFAULT_CENTER, geocodeAddress } from '@/lib/mapbox';
 import { useGeolocation } from '@/hooks/use-geolocation';
-
-const mapContainerStyle = {
-  width: '100%',
-  height: '400px',
-};
+import { toast } from 'sonner';
 
 interface LocationPickerProps {
   onLocationSelect: (location: { lat: number; lng: number; address?: string }) => void;
@@ -27,25 +24,27 @@ export function LocationPicker({
   address,
   disabled = false,
 }: LocationPickerProps) {
-  const { isLoaded } = useJsApiLoader({
-    id: 'google-map-script',
-    googleMapsApiKey: GOOGLE_MAPS_API_KEY,
-  });
-
   const { lat: currentLat, lng: currentLng, isLoading: isLoadingLocation } = useGeolocation();
   const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number } | null>(
     initialLocation || null
   );
-  const [mapCenter, setMapCenter] = useState(
-    initialLocation || (currentLat && currentLng ? { lat: currentLat, lng: currentLng } : MAP_DEFAULT_CENTER)
-  );
+  const [viewState, setViewState] = useState({
+    longitude: initialLocation?.lng || currentLng || MAP_DEFAULT_CENTER.lng,
+    latitude: initialLocation?.lat || currentLat || MAP_DEFAULT_CENTER.lat,
+    zoom: 15,
+  });
   const [searchAddress, setSearchAddress] = useState(address || '');
   const [isSearching, setIsSearching] = useState(false);
+  const [mapRef, setMapRef] = useState<MapRef | null>(null);
 
   useEffect(() => {
     if (initialLocation) {
       setSelectedLocation(initialLocation);
-      setMapCenter(initialLocation);
+      setViewState({
+        longitude: initialLocation.lng,
+        latitude: initialLocation.lat,
+        zoom: 15,
+      });
     }
   }, [initialLocation]);
 
@@ -56,29 +55,40 @@ export function LocationPicker({
   }, [address]);
 
   const handleMapClick = useCallback(
-    (e: google.maps.MapMouseEvent) => {
+    (e: any) => {
       if (disabled) return;
-      if (e.latLng) {
-        const location = {
-          lat: e.latLng.lat(),
-          lng: e.latLng.lng(),
-        };
-        setSelectedLocation(location);
-        setMapCenter(location);
-        onLocationSelect(location);
-      }
+      const location = {
+        lat: e.lngLat.lat,
+        lng: e.lngLat.lng,
+      };
+      setSelectedLocation(location);
+      setViewState({
+        ...viewState,
+        longitude: location.lng,
+        latitude: location.lat,
+      });
+      onLocationSelect(location);
     },
-    [disabled, onLocationSelect]
+    [disabled, onLocationSelect, viewState]
   );
 
   const handleUseCurrentLocation = useCallback(() => {
     if (currentLat && currentLng) {
       const location = { lat: currentLat, lng: currentLng };
       setSelectedLocation(location);
-      setMapCenter(location);
+      setViewState({
+        longitude: currentLng,
+        latitude: currentLat,
+        zoom: 15,
+      });
       onLocationSelect(location);
+      toast.info('Ubicación', { description: 'Tu ubicación actual ha sido seleccionada.' });
+    } else if (isLoadingLocation) {
+      toast.info('Ubicación', { description: 'Obteniendo tu ubicación...' });
+    } else {
+      toast.error('Error de Geolocalización', { description: 'No se pudo obtener tu ubicación actual.' });
     }
-  }, [currentLat, currentLng, onLocationSelect]);
+  }, [currentLat, currentLng, isLoadingLocation, onLocationSelect]);
 
   const handleSearchAddress = useCallback(async () => {
     if (!searchAddress.trim()) return;
@@ -88,40 +98,38 @@ export function LocationPicker({
       const location = await geocodeAddress(searchAddress);
       if (location) {
         setSelectedLocation(location);
-        setMapCenter(location);
+        setViewState({
+          longitude: location.lng,
+          latitude: location.lat,
+          zoom: 15,
+        });
         onLocationSelect({ ...location, address: searchAddress });
+        toast.success('Dirección encontrada', { description: 'Ubicación seleccionada en el mapa.' });
+      } else {
+        toast.error('Error', { description: 'No se pudo encontrar la dirección. Intenta con otra búsqueda.' });
       }
     } catch (error) {
       console.error('Error searching address:', error);
+      toast.error('Error', { description: 'Hubo un problema al buscar la dirección.' });
     } finally {
       setIsSearching(false);
     }
   }, [searchAddress, onLocationSelect]);
 
-  if (!GOOGLE_MAPS_API_KEY) {
+  if (!MAPBOX_ACCESS_TOKEN) {
     return (
       <Card>
         <CardContent className="flex flex-col items-center justify-center h-[400px] space-y-4 text-center">
           <MapPin className="h-12 w-12 text-muted-foreground" />
           <div>
-            <p className="font-semibold">Google Maps API Key no configurada</p>
+            <p className="font-semibold">Mapbox Access Token no configurado</p>
             <p className="text-sm text-muted-foreground mt-2">
-              Agrega <code className="bg-muted px-1 rounded">NEXT_PUBLIC_GOOGLE_MAPS_API_KEY</code> en tu archivo <code className="bg-muted px-1 rounded">.env.local</code>
+              Agrega <code className="bg-muted px-1 rounded">NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN</code> en tu archivo <code className="bg-muted px-1 rounded">.env.local</code>
             </p>
             <p className="text-xs text-muted-foreground mt-2">
-              Ver <code className="bg-muted px-1 rounded">CONFIGURACION_APIS.md</code> para instrucciones
+              Obtén tu token en: <a href="https://account.mapbox.com/access-tokens/" target="_blank" rel="noopener noreferrer" className="text-primary underline">account.mapbox.com</a>
             </p>
           </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (!isLoaded) {
-    return (
-      <Card>
-        <CardContent className="flex items-center justify-center h-[400px]">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </CardContent>
       </Card>
     );
@@ -173,46 +181,51 @@ export function LocationPicker({
             variant="outline"
             title="Usar mi ubicación actual"
           >
-            <Navigation className="h-4 w-4" />
+            {isLoadingLocation ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Navigation className="h-4 w-4" />
+            )}
           </Button>
         </div>
 
         {/* Map */}
         <div className="rounded-lg overflow-hidden border">
-          <GoogleMap
-            mapContainerStyle={mapContainerStyle}
-            center={mapCenter}
-            zoom={15}
+          <Map
+            {...viewState}
+            onMove={(evt) => setViewState(evt.viewState)}
             onClick={handleMapClick}
-            options={{
-              disableDefaultUI: false,
-              zoomControl: true,
-              streetViewControl: false,
-              mapTypeControl: false,
-              fullscreenControl: true,
-            }}
+            style={{ width: '100%', height: 400 }}
+            mapStyle="mapbox://styles/mapbox/streets-v12"
+            mapboxAccessToken={MAPBOX_ACCESS_TOKEN}
+            ref={setMapRef}
+            doubleClickZoom={false}
           >
             {selectedLocation && (
               <Marker
-                position={selectedLocation}
+                longitude={selectedLocation.lng}
+                latitude={selectedLocation.lat}
                 draggable={!disabled}
                 onDragEnd={(e) => {
-                  if (e.latLng) {
-                    const location = {
-                      lat: e.latLng.lat(),
-                      lng: e.latLng.lng(),
-                    };
-                    setSelectedLocation(location);
-                    onLocationSelect(location);
-                  }
+                  const location = {
+                    lat: e.lngLat.lat,
+                    lng: e.lngLat.lng,
+                  };
+                  setSelectedLocation(location);
+                  onLocationSelect(location);
                 }}
-              />
+                anchor="bottom"
+              >
+                <div className="relative">
+                  <MapPin className="h-8 w-8 text-primary drop-shadow-lg" fill="currentColor" />
+                </div>
+              </Marker>
             )}
-          </GoogleMap>
+          </Map>
         </div>
 
         {selectedLocation && (
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground text-center">
             Ubicación seleccionada: {selectedLocation.lat.toFixed(6)}, {selectedLocation.lng.toFixed(6)}
           </p>
         )}
@@ -220,4 +233,3 @@ export function LocationPicker({
     </Card>
   );
 }
-

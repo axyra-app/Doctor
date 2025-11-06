@@ -17,7 +17,7 @@ import { useAuth } from '@/hooks/use-auth-provider';
 import { useFirestore } from '@/firebase';
 import { collection, addDoc } from 'firebase/firestore';
 import { LocationPicker } from '@/components/maps/location-picker';
-import { geocodeAddress } from '@/lib/google-maps';
+import { geocodeAddress } from '@/lib/mapbox';
 import { PageHeader } from '@/components/page-header';
 
 const requestSchema = z.object({

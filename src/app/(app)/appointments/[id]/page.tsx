@@ -15,7 +15,13 @@ import { useRouter } from 'next/navigation';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale/es';
 import { PageHeader } from '@/components/page-header';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, MessageCircle, Star } from 'lucide-react';
+import { TrackingMap } from '@/components/maps/tracking-map';
+import { AppointmentChat } from '@/components/chat/appointment-chat';
+import { RatingForm } from '@/components/ratings/rating-form';
+import { RatingsList } from '@/components/ratings/ratings-list';
+import { useUserRating } from '@/hooks/use-ratings';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function AppointmentDetailsPage() {
   const { id: appointmentId } = useParams();
@@ -28,6 +34,12 @@ export default function AppointmentDetailsPage() {
 
   const { user: doctor } = useUser(appointment?.doctorId);
   const { user: patient } = useUser(appointment?.patientId);
+  
+  // Check if patient has already rated this doctor
+  const { rating: existingRating, hasRated } = useUserRating(
+    appointment?.doctorId || '',
+    appointment?.patientId || ''
+  );
 
   const handleAcceptAppointment = async () => {
     if (!currentUser || currentUser.role !== 'doctor' || !appointment) return;
@@ -36,9 +48,10 @@ export default function AppointmentDetailsPage() {
       await updateDocument('appointments', appointment.id, {
         status: 'accepted',
         doctorId: currentUser.uid,
+        acceptedAt: Date.now(),
       });
       toast.success('Cita Aceptada', { description: 'La cita ha sido asignada y notificada al paciente.' });
-      router.push('/dashboard');
+      // No redirigir, dejar que el usuario vea el mapa
     } catch (err) {
       toast.error('Error', { description: 'Hubo un problema al aceptar la cita.' });
     }
@@ -98,7 +111,7 @@ export default function AppointmentDetailsPage() {
   };
 
     return (
-      <div className="max-w-3xl mx-auto space-y-6">
+      <div className="max-w-4xl mx-auto space-y-6">
         <PageHeader
           title="Detalles de la Solicitud"
           description="Información completa de la solicitud de atención médica"
@@ -109,8 +122,25 @@ export default function AppointmentDetailsPage() {
             </Button>
           }
         />
-        {/* Card con estado y urgencia */}
-        <Card>
+        
+        {/* Tabs para organizar información */}
+        <Tabs defaultValue="details" className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="details">Detalles</TabsTrigger>
+            <TabsTrigger value="chat" disabled={!appointment.doctorId}>
+              <MessageCircle className="mr-2 h-4 w-4" />
+              Chat
+            </TabsTrigger>
+            <TabsTrigger value="ratings" disabled={!appointment.doctorId}>
+              <Star className="mr-2 h-4 w-4" />
+              Calificaciones
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Tab: Detalles */}
+          <TabsContent value="details" className="space-y-6">
+            {/* Card con estado y urgencia */}
+            <Card>
         <CardHeader>
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1">
@@ -223,6 +253,15 @@ export default function AppointmentDetailsPage() {
             </div>
           )}
 
+          {/* Mapa de Tracking (si hay ubicación) */}
+          {appointment.location && (
+            <TrackingMap
+              appointment={appointment}
+              isDoctor={isDoctorOwner}
+              isPatient={isPatientOwner}
+            />
+          )}
+
           {/* Acciones */}
           <div className="pt-4 space-y-3">
             {currentUser?.role === 'doctor' && appointment.status === 'pending' && (
@@ -231,11 +270,6 @@ export default function AppointmentDetailsPage() {
               </Button>
             )}
             
-            {isDoctorOwner && appointment.status === 'accepted' && (
-              <Button onClick={handleCompleteAppointment} className="w-full" size="lg" variant="default">
-                <ShieldCheck className="mr-2 h-5 w-5"/> Marcar como Completada
-              </Button>
-            )}
 
             {isPatientOwner && appointment.status === 'pending' && (
               <Button 
@@ -264,6 +298,91 @@ export default function AppointmentDetailsPage() {
           </div>
         </CardContent>
       </Card>
+      </TabsContent>
+
+      {/* Tab: Chat */}
+      <TabsContent value="chat">
+        {appointment.doctorId ? (
+          <AppointmentChat
+            appointmentId={appointment.id}
+            doctorId={appointment.doctorId}
+            patientId={appointment.patientId}
+          />
+        ) : (
+          <Card>
+            <CardContent className="flex items-center justify-center h-[400px] text-center">
+              <div className="space-y-2">
+                <MessageCircle className="h-12 w-12 text-muted-foreground mx-auto" />
+                <p className="text-muted-foreground">
+                  El chat estará disponible cuando un doctor acepte tu solicitud.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </TabsContent>
+
+      {/* Tab: Calificaciones */}
+      <TabsContent value="ratings" className="space-y-6">
+        {appointment.doctorId ? (
+          <>
+            {/* Rating Form - Only show if patient and appointment is completed and not rated yet */}
+            {isPatientOwner && 
+             appointment.status === 'completed' && 
+             !hasRated && (
+              <RatingForm
+                doctorId={appointment.doctorId}
+                appointmentId={appointment.id}
+                onSuccess={() => {
+                  // Refresh or show success message
+                }}
+              />
+            )}
+
+            {/* Show existing rating if already rated */}
+            {hasRated && existingRating && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Tu Calificación</CardTitle>
+                  <CardDescription>Ya calificaste a este doctor</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center gap-2 mb-2">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Star
+                        key={star}
+                        className={`h-5 w-5 ${
+                          existingRating.score >= star
+                            ? 'fill-yellow-400 text-yellow-400'
+                            : 'fill-gray-200 text-gray-200 dark:fill-gray-700 dark:text-gray-700'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                    {existingRating.comment}
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Ratings List */}
+            <RatingsList doctorId={appointment.doctorId} showAverage={true} />
+          </>
+        ) : (
+          <Card>
+            <CardContent className="flex items-center justify-center h-[400px] text-center">
+              <div className="space-y-2">
+                <Star className="h-12 w-12 text-muted-foreground mx-auto" />
+                <p className="text-muted-foreground">
+                  Las calificaciones estarán disponibles cuando un doctor acepte tu solicitud.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </TabsContent>
+    </Tabs>
     </div>
   );
 }

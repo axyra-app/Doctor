@@ -32,7 +32,7 @@ Plataforma de atención médica a domicilio estilo Uber/Indrive. Conecta pacient
 
 - **Next.js 15** - Framework React
 - **Firebase** - Autenticación y base de datos
-- **Google Maps API** - Mapas y geolocalización
+- **Mapbox** - Mapas y geolocalización
 - **Google AI (Genkit)** - Sugerencias inteligentes
 - **TypeScript** - Tipado estático
 - **Tailwind CSS** - Estilos
@@ -40,22 +40,26 @@ Plataforma de atención médica a domicilio estilo Uber/Indrive. Conecta pacient
 
 ## 📋 Funcionalidades
 
+- ✅ Landing page profesional y atractiva
 - ✅ Autenticación de usuarios (pacientes y doctores)
 - ✅ Sistema de solicitudes de atención médica
-- ✅ Geolocalización y mapas interactivos
+- ✅ Geolocalización y mapas interactivos (Mapbox)
 - ✅ Disponibilidad online/offline para doctores
 - ✅ Perfiles mejorados con especialidades y certificaciones
 - ✅ Sistema de urgencias (baja, media, alta, emergencia)
-- 🔄 Notificaciones en tiempo real (en desarrollo)
-- 🔄 Tracking en tiempo real (en desarrollo)
-- 🔄 Sistema de pagos (en desarrollo)
+- ✅ Tracking en tiempo real del doctor (estilo Indrive/Uber) con ruta real
+- ✅ Sistema de chat en tiempo real entre paciente y doctor
+- ✅ Sistema completo de calificaciones y reseñas
+- 🔄 Notificaciones en tiempo real (Firebase Cloud Messaging)
+- 🔄 Sistema de pagos integrado (Stripe/PayPal)
+- 🔄 Filtros y búsqueda avanzada
 
 ## 🔑 APIs Requeridas
 
 Ver `CONFIGURACION_APIS.md` para detalles completos:
 
 1. **Firebase** - Ya configurado ✅
-2. **Google Maps API** - Necesario para mapas
+2. **Mapbox** - Necesario para mapas (gratis, fácil de obtener)
 3. **Google AI API** - Opcional, para sugerencias IA
 
 ## 📦 Scripts Disponibles

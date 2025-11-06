@@ -10,15 +10,30 @@ Este proyecto necesita **3 APIs** configuradas. Sigue este paso a paso para obte
 
 ### Estado: ✅ Ya tienes Firebase configurado
 
-**Proyecto:** `doctor-d1522`
+**Proyecto:** `doctor-d4d21`
 
-**No necesitas hacer nada** - Ya está configurado en:
-- `src/firebase/config.ts`
-- Firebase Console
+**Variables de Entorno para Vercel:**
+
+Agrega estas variables en **Vercel > Settings > Environment Variables**:
+
+```env
+NEXT_PUBLIC_FIREBASE_API_KEY=AIzaSyBVQg-uVcWlaSAgHUlaBxWqkORvYuvED_A
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=doctor-d4d21.firebaseapp.com
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=doctor-d4d21
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=doctor-d4d21.firebasestorage.app
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=620338133959
+NEXT_PUBLIC_FIREBASE_APP_ID=1:620338133959:web:95281d0ee7a0328f91f7e2
+NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=G-5MS0QXRLLS
+```
+
+**Configuración:**
+- Ya está configurado en `src/firebase/config.ts`
+- Las variables de entorno son opcionales (hay fallback a la configuración hardcodeada)
+- Se recomienda usar variables de entorno en producción para mayor flexibilidad
 
 ---
 
-## 2️⃣ Google Maps API (NECESARIO)
+## 2️⃣ Mapbox API (NECESARIO)
 
 ### ¿Para qué sirve?
 - Mostrar mapas interactivos
@@ -26,52 +41,33 @@ Este proyecto necesita **3 APIs** configuradas. Sigue este paso a paso para obte
 - Ver solicitudes en mapa
 - Calcular distancias
 
-### Paso 1: Obtener API Key
+### Paso 1: Obtener Access Token
 
-1. **Ve a Google Cloud Console:**
+1. **Ve a Mapbox:**
    ```
-   https://console.cloud.google.com/
+   https://account.mapbox.com/
    ```
 
-2. **Crea o selecciona un proyecto:**
-   - Si no tienes proyecto, crea uno nuevo
-   - Nombre sugerido: "DoctorAtHome"
+2. **Crea cuenta (gratis):**
+   - Haz clic en **"Sign up"** o **"Iniciar sesión"** si ya tienes cuenta
+   - Crea cuenta con tu email
 
-3. **Habilita las APIs necesarias:**
-   - Ve a **APIs & Services > Library**
-   - Busca y habilita:
-     - ✅ **Maps JavaScript API**
-     - ✅ **Geocoding API**
-   - (Opcional) **Places API** (para autocompletado futuro)
-
-4. **Crea una API Key:**
-   - Ve a **APIs & Services > Credentials**
-   - Click en **Create Credentials > API Key**
-   - Copia tu API Key (ej: `AIzaSy...`)
-
-5. **Configura restricciones (Recomendado):**
-   - Click en tu API Key recién creada
-   - En **Application restrictions:**
-     - Selecciona **HTTP referrers (web sites)**
-     - Agrega:
-       - `http://localhost:9002/*` (desarrollo)
-       - `https://tu-dominio.vercel.app/*` (producción)
-   - En **API restrictions:**
-     - Selecciona **Restrict key**
-     - Marca solo: Maps JavaScript API y Geocoding API
-   - Click **Save**
+3. **Obtén tu Access Token:**
+   - Ve a: **https://account.mapbox.com/access-tokens/**
+   - Verás tu **"Default public token"** (token público por defecto)
+   - **Copia el token** (empieza con `pk.ey...`)
 
 ### Paso 2: Configurar en el Proyecto
 
 **Archivo:** `.env.local` (crea este archivo en la raíz del proyecto)
 
 ```env
-NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=tu-api-key-aqui
+NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN=tu-token-aqui
 ```
 
 **Ejemplo:**
 ```env
-NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=AIzaSyDoucdPhIOMY8W2psJQ0ttd7uy_gx7E1xM
+NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN=pk.eyJ1IjoiZXhhbXBsZSIsImEiOiJjbGV4YW1wbGUifQ.example
 ```
 
 ### Paso 3: Configurar en Vercel (Producción)
@@ -79,15 +75,15 @@ NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=AIzaSyDoucdPhIOMY8W2psJQ0ttd7uy_gx7E1xM
 1. Ve a tu proyecto en **Vercel**
 2. **Settings > Environment Variables**
 3. Agrega:
-   - **Key:** `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY`
-   - **Value:** Tu API Key de Google Maps
+   - **Key:** `NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN`
+   - **Value:** Tu Access Token de Mapbox
    - **Environments:** Production, Preview, Development
 4. Click **Save**
 5. **Redeploy** tu aplicación
 
 ### Costos:
-- **Gratis:** Primeros 28,000 cargas de mapa/mes
-- **Luego:** $7 por 1,000 cargas adicionales
+- **Gratis:** 50,000 cargas de mapa/mes
+- **Luego:** $5 por 1,000 cargas adicionales
 
 ---
 
@@ -147,8 +143,8 @@ GOOGLE_GENAI_API_KEY=AIzaSy...
 ### Archivo `.env.local` (local):
 
 ```env
-# Google Maps API (NECESARIO)
-NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=tu-api-key-aqui
+# Mapbox API (NECESARIO)
+NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN=tu-token-aqui
 
 # Google AI Genkit (OPCIONAL - para sugerencias IA)
 GOOGLE_GENAI_API_KEY=tu-api-key-aqui
@@ -156,17 +152,29 @@ GOOGLE_GENAI_API_KEY=tu-api-key-aqui
 
 ### Variables en Vercel:
 
-1. `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` - Google Maps API Key
-2. `GOOGLE_GENAI_API_KEY` - Google AI API Key (opcional)
+**Firebase (Recomendado):**
+1. `NEXT_PUBLIC_FIREBASE_API_KEY` - Firebase API Key
+2. `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` - Firebase Auth Domain
+3. `NEXT_PUBLIC_FIREBASE_PROJECT_ID` - Firebase Project ID
+4. `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET` - Firebase Storage Bucket
+5. `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` - Firebase Messaging Sender ID
+6. `NEXT_PUBLIC_FIREBASE_APP_ID` - Firebase App ID
+7. `NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID` - Firebase Measurement ID (Analytics)
+
+**Mapbox (NECESARIO):**
+8. `NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN` - Mapbox Access Token
+
+**Google AI (OPCIONAL):**
+9. `GOOGLE_GENAI_API_KEY` - Google AI API Key (opcional)
 
 ---
 
 ## ✅ Verificación
 
-### Google Maps:
+### Mapbox:
 1. Abre la aplicación en `http://localhost:9002`
 2. Ve a `/requests/new` (nueva solicitud)
-3. Deberías ver un mapa interactivo
+3. Deberías ver un mapa interactivo de Mapbox
 4. Si no aparece, revisa la consola del navegador por errores
 
 ### Google AI:
@@ -179,30 +187,28 @@ GOOGLE_GENAI_API_KEY=tu-api-key-aqui
 
 ## 🆘 Solución de Problemas
 
-### Error: "Google Maps API key not found"
-- Verifica que `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` esté en `.env.local`
+### Error: "Mapbox Access Token no configurado"
+- Verifica que `NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN` esté en `.env.local`
 - Reinicia el servidor: `npm run dev`
-- Verifica que la API Key esté correcta
+- Verifica que el token esté correcto
 
-### Error: "This API project is not authorized"
-- Verifica que las APIs estén habilitadas en Google Cloud Console
-- Verifica las restricciones de la API Key
+### Error: "Invalid token"
+- Verifica que copiaste el token completo
+- Asegúrate de que es el token **público** (Default public token)
+- No uses tokens secretos
 
-### Error: "RefererNotAllowedMapError"
-- Agrega tu dominio a las restricciones HTTP referrers
-- Para desarrollo local: `http://localhost:9002/*`
-
-### Error: "Billing not enabled"
-- Google Maps requiere facturación habilitada
-- Ve a Google Cloud Console > Billing
-- Asocia una cuenta de facturación (tienes créditos gratis)
+### El mapa no aparece
+- Verifica que el token esté correcto
+- Revisa la consola del navegador (F12) para ver errores
+- Asegúrate de que el token sea público (empieza con `pk.`)
 
 ---
 
 ## 📚 Enlaces Útiles
 
-- **Google Cloud Console:** https://console.cloud.google.com/
-- **Google Maps Platform:** https://developers.google.com/maps
+- **Mapbox Account:** https://account.mapbox.com/
+- **Mapbox Access Tokens:** https://account.mapbox.com/access-tokens/
+- **Mapbox Documentation:** https://docs.mapbox.com/
 - **Google AI Studio:** https://aistudio.google.com/
 - **Vercel Environment Variables:** Tu proyecto > Settings > Environment Variables
 
@@ -210,17 +216,16 @@ GOOGLE_GENAI_API_KEY=tu-api-key-aqui
 
 ## 🎯 Checklist
 
-- [ ] Google Maps API Key obtenida
-- [ ] Maps JavaScript API habilitada
-- [ ] Geocoding API habilitada
-- [ ] API Key agregada a `.env.local`
-- [ ] API Key agregada a Vercel
+- [ ] Mapbox cuenta creada
+- [ ] Mapbox Access Token obtenido
+- [ ] Token agregado a `.env.local`
+- [ ] Token agregado a Vercel
 - [ ] Mapa funciona en `/requests/new`
 - [ ] (Opcional) Google AI API Key obtenida
 - [ ] (Opcional) Google AI agregada a `.env.local` y Vercel
 
 ---
 
-**Nota:** Sin Google Maps API, las funcionalidades de mapas no funcionarán. Sin Google AI, las sugerencias inteligentes no estarán disponibles, pero el resto de la app funcionará normalmente.
+**Nota:** Sin Mapbox Access Token, las funcionalidades de mapas no funcionarán. Sin Google AI, las sugerencias inteligentes no estarán disponibles, pero el resto de la app funcionará normalmente.
 
 

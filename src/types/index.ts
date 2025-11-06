@@ -83,4 +83,5 @@ export interface Rating {
   score: number; // 1-5
   comment: string;
   date: number; // timestamp
+  appointmentId?: string; // Link to appointment
 }

@@ -16,6 +16,9 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth-provider';
 import { useFirestore } from '@/firebase';
 import { collection, addDoc } from 'firebase/firestore';
+import { LocationPicker } from '@/components/maps/location-picker';
+import { geocodeAddress } from '@/lib/google-maps';
+import { PageHeader } from '@/components/page-header';
 
 const requestSchema = z.object({
   description: z.string().min(20, { message: 'Por favor, describe tu problema con más detalle (mínimo 20 caracteres).' }),
@@ -58,6 +61,7 @@ export default function NewRequestPage() {
   const { user } = useAuth();
   const firestore = useFirestore();
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number } | null>(null);
 
   const form = useForm<RequestFormValues>({
     resolver: zodResolver(requestSchema),
@@ -83,6 +87,15 @@ export default function NewRequestPage() {
 
     setIsLoading(true);
     try {
+      // Geocode address if location not selected manually
+      let location = selectedLocation;
+      if (!location && data.address) {
+        const geocoded = await geocodeAddress(data.address);
+        if (geocoded) {
+          location = geocoded;
+        }
+      }
+
       const appointmentsCollection = collection(firestore, 'appointments');
       
       const appointmentData = {
@@ -96,6 +109,7 @@ export default function NewRequestPage() {
         urgency: data.urgency,
         contactPhone: data.contactPhone || user.phone || '',
         additionalNotes: data.additionalNotes || '',
+        ...(location && { location }),
       };
 
       await addDoc(appointmentsCollection, appointmentData);
@@ -118,15 +132,13 @@ export default function NewRequestPage() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto">
+    <div className="max-w-3xl mx-auto space-y-6">
+      <PageHeader
+        title="Nueva Solicitud de Atención"
+        description="Completa el formulario para solicitar una visita médica a domicilio."
+      />
       <Card>
-        <CardHeader>
-          <CardTitle className="text-2xl">Nueva Solicitud de Atención</CardTitle>
-          <CardDescription>
-            Completa el formulario para solicitar una visita médica a domicilio.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <FormField
@@ -218,14 +230,32 @@ export default function NewRequestPage() {
                       Dirección para la Visita
                     </FormLabel>
                     <FormControl>
-                      <Input placeholder="Calle, número, colonia, ciudad, código postal" {...field} />
+                      <Input 
+                        placeholder="Calle, número, colonia, ciudad, código postal" 
+                        {...field}
+                        onChange={(e) => {
+                          field.onChange(e);
+                          // Clear selected location when address changes
+                          setSelectedLocation(null);
+                        }}
+                      />
                     </FormControl>
                     <FormDescription>
-                      Dirección completa donde necesitas que te visite el médico.
+                      Dirección completa donde necesitas que te visite el médico. Puedes seleccionar la ubicación en el mapa a continuación.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
+              />
+
+              {/* Location Picker Map */}
+              <LocationPicker
+                onLocationSelect={(location) => {
+                  setSelectedLocation({ lat: location.lat, lng: location.lng });
+                  // Optionally update address field if reverse geocoding is available
+                }}
+                address={form.watch('address')}
+                disabled={isLoading}
               />
 
               <FormField

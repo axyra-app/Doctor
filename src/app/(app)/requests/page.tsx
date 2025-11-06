@@ -9,6 +9,8 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale/es';
+import { PageHeader } from '@/components/page-header';
+import { Plus } from 'lucide-react';
 
 const statusMap: { [key: string]: string } = {
   pending: 'Pendiente',
@@ -49,12 +51,18 @@ export default function RequestsListPage() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Mis Solicitudes</h1>
-        <p className="text-muted-foreground mt-2">
-          Aquí puedes ver el historial completo de tus solicitudes de atención médica.
-        </p>
-      </div>
+      <PageHeader
+        title="Mis Solicitudes"
+        description="Aquí puedes ver el historial completo de tus solicitudes de atención médica."
+        action={
+          <Link href="/requests/new">
+            <Button size="sm" className="w-full sm:w-auto">
+              <Plus className="mr-2 h-4 w-4" />
+              Nueva Solicitud
+            </Button>
+          </Link>
+        }
+      />
 
       {isLoading ? (
         <Card>
@@ -65,62 +73,58 @@ export default function RequestsListPage() {
       ) : sortedRequests.length > 0 ? (
         <div className="space-y-4">
           {sortedRequests.map((req) => (
-            <Card key={req.id} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-                  <div className="flex-1 space-y-4">
-                    <div className="flex items-start gap-3">
-                      <div className="flex-1">
-                        <div className="flex items-start justify-between gap-4 mb-2">
-                          <h3 className="font-semibold text-lg line-clamp-2">{req.description}</h3>
-                          <div className="flex flex-col gap-2 items-end flex-shrink-0">
-                            {req.urgency && (
-                              <Badge className={`${urgencyColors[req.urgency]} text-xs`}>
-                                <AlertCircle className="h-3 w-3 mr-1" />
-                                {urgencyLabels[req.urgency]}
-                              </Badge>
-                            )}
-                            <Badge className={`${statusColors[req.status]} text-xs`}>
-                              {statusMap[req.status] || req.status}
+              <Card key={req.id} className="hover:shadow-lg transition-all duration-200 border-l-4 border-l-transparent hover:border-l-primary">
+                <CardContent className="p-4 sm:p-6">
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                    <div className="flex-1 space-y-3 min-w-0">
+                      <div className="flex items-start justify-between gap-3 mb-2">
+                        <h3 className="font-semibold text-base sm:text-lg line-clamp-2 flex-1">{req.description}</h3>
+                        <div className="flex flex-col gap-2 items-end flex-shrink-0">
+                          {req.urgency && (
+                            <Badge className={`${urgencyColors[req.urgency]} text-xs`}>
+                              <AlertCircle className="h-3 w-3 mr-1" />
+                              <span className="hidden sm:inline">{urgencyLabels[req.urgency]}</span>
                             </Badge>
-                          </div>
-                        </div>
-                        
-                        <div className="space-y-2 text-sm">
-                          {req.specialty && (
-                            <div className="flex items-center gap-2 text-muted-foreground">
-                              <Stethoscope className="h-4 w-4" />
-                              <span>{req.specialty}</span>
-                            </div>
                           )}
+                          <Badge className={`${statusColors[req.status]} text-xs`}>
+                            {statusMap[req.status] || req.status}
+                          </Badge>
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-2 text-xs sm:text-sm">
+                        {req.specialty && (
                           <div className="flex items-center gap-2 text-muted-foreground">
-                            <MapPin className="h-4 w-4" />
-                            <span className="line-clamp-1">{req.address}</span>
+                            <Stethoscope className="h-4 w-4 flex-shrink-0" />
+                            <span className="truncate">{req.specialty}</span>
                           </div>
-                          <div className="flex items-center gap-2 text-muted-foreground">
-                            <Clock className="h-4 w-4" />
-                            <span>
-                              Solicitado {formatDistanceToNow(new Date(req.requestDate), {
-                                addSuffix: true,
-                                locale: es,
-                              })}
-                            </span>
-                          </div>
+                        )}
+                        <div className="flex items-start gap-2 text-muted-foreground">
+                          <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                          <span className="line-clamp-2 break-words">{req.address}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                          <Clock className="h-4 w-4 flex-shrink-0" />
+                          <span>
+                            Solicitado {formatDistanceToNow(new Date(req.requestDate), {
+                              addSuffix: true,
+                              locale: es,
+                            })}
+                          </span>
                         </div>
                       </div>
                     </div>
+                    
+                    <div className="flex items-center gap-3 sm:flex-col sm:items-end sm:justify-start pt-2 sm:pt-0 border-t sm:border-t-0 sm:border-l pl-0 sm:pl-4 sm:ml-4">
+                      <Link href={`/appointments/${req.id}`} className="w-full sm:w-auto">
+                        <Button variant="secondary" size="sm" className="w-full sm:w-auto">
+                          Ver Detalles <ArrowRight className="ml-2 h-4 w-4" />
+                        </Button>
+                      </Link>
+                    </div>
                   </div>
-                  
-                  <div className="flex items-center gap-3 md:flex-col md:items-end">
-                    <Link href={`/appointments/${req.id}`}>
-                      <Button variant="secondary" className="w-full md:w-auto">
-                        Ver Detalles <ArrowRight className="ml-2 h-4 w-4" />
-                      </Button>
-                    </Link>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
           ))}
         </div>
       ) : (

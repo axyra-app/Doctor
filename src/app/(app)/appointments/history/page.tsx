@@ -2,11 +2,12 @@
 
 import { useAuth } from '@/hooks/use-auth-provider';
 import { useAppointments } from '@/hooks/use-appointments';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Loader2, ArrowRight, MapPin, CalendarCheck } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import PatientName from '@/components/patient-name'; // Importar el nuevo componente
+import PatientName from '@/components/patient-name';
+import { PageHeader } from '@/components/page-header';
 
 export default function AppointmentsHistoryPage() {
   const { user } = useAuth();
@@ -17,40 +18,37 @@ export default function AppointmentsHistoryPage() {
   );
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-4xl mx-auto space-y-6">
+      <PageHeader
+        title="Historial de Atenciones"
+        description="Aquí puedes ver todas las citas que has completado."
+      />
       <Card>
-        <CardHeader>
-          <CardTitle>Historial de Atenciones</CardTitle>
-          <CardDescription>
-            Aquí puedes ver todas las citas que has completado.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           {isLoading ? (
             <div className="flex justify-center py-8">
               <Loader2 className="h-8 w-8 animate-spin" />
             </div>
           ) : completedAppointments && completedAppointments.length > 0 ? (
-            <ul className="space-y-4">
+            <ul className="space-y-3 sm:space-y-4">
               {completedAppointments.map((req) => (
                 <li
                   key={req.id}
-                  className="flex flex-wrap items-center justify-between gap-4 rounded-md border p-4 bg-card hover:bg-secondary/80 transition-colors"
+                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 rounded-md border p-3 sm:p-4 bg-card hover:bg-secondary/80 transition-colors"
                 >
-                  <div className="space-y-2">
-                    {/* Usar el nuevo componente PatientName */}
+                  <div className="flex-1 space-y-2 min-w-0">
                     <PatientName patientId={req.patientId} />
-                    <p className="flex items-center text-sm text-muted-foreground">
-                      <MapPin className="mr-2 h-4 w-4 text-primary" />
-                      {req.address}
+                    <p className="flex items-start gap-2 text-xs sm:text-sm text-muted-foreground">
+                      <MapPin className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                      <span className="line-clamp-2 break-words">{req.address}</span>
                     </p>
-                     <p className="flex items-center text-sm text-muted-foreground">
-                      <CalendarCheck className="mr-2 h-4 w-4 text-primary" />
+                    <p className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
+                      <CalendarCheck className="h-4 w-4 text-primary flex-shrink-0" />
                       Completada el {new Date(req.requestDate).toLocaleDateString('es-ES')}
                     </p>
                   </div>
-                  <Link href={`/appointments/${req.id}`} passHref>
-                    <Button variant="secondary">
+                  <Link href={`/appointments/${req.id}`} className="w-full sm:w-auto">
+                    <Button variant="secondary" size="sm" className="w-full sm:w-auto">
                       Ver Detalles <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
                   </Link>

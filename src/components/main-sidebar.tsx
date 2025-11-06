@@ -63,54 +63,86 @@ export function MainSidebar({ user }: MainSidebarProps) {
   };
 
   return (
-    <Sidebar variant="sidebar" collapsible="icon">
-      <SidebarHeader className="items-center justify-center gap-2 text-center group-data-[collapsible=icon]:hidden">
-        <Logo className="h-8 w-8 text-primary" />
-        <h2 className="text-lg font-semibold tracking-tight text-primary">DoctorAtHome</h2>
+    <Sidebar variant="sidebar" collapsible="icon" className="border-r">
+      <SidebarHeader className="border-b px-4 py-3">
+        <div className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center">
+          <Logo className="h-7 w-7 text-primary flex-shrink-0" />
+          <div className="flex flex-col gap-0.5 group-data-[collapsible=icon]:hidden">
+            <h2 className="text-base font-semibold tracking-tight text-foreground">DoctorAtHome</h2>
+            <span className="text-xs text-muted-foreground">
+              {user.role === 'doctor' ? 'Doctor' : 'Paciente'}
+            </span>
+          </div>
+        </div>
       </SidebarHeader>
-      <SidebarContent>
-        <SidebarMenu>
+      
+      <SidebarContent className="px-2 py-4">
+        <SidebarMenu className="space-y-1">
           {navItems.map((item) => (
             <SidebarMenuItem key={item.href}>
-              <Link href={item.href}>
+              <Link href={item.href} className="w-full">
                 <SidebarMenuButton
-                  isActive={pathname === item.href}
+                  isActive={pathname === item.href || pathname.startsWith(item.href + '/')}
                   tooltip={item.label}
+                  className="w-full justify-start gap-3 px-3 py-2.5"
                 >
-                  <item.icon />
-                  <span>{item.label}</span>
+                  <item.icon className="h-5 w-5" />
+                  <span className="font-medium">{item.label}</span>
                 </SidebarMenuButton>
               </Link>
             </SidebarMenuItem>
           ))}
         </SidebarMenu>
       </SidebarContent>
-      <SidebarFooter className="border-t border-sidebar-border">
-         <SidebarMenu>
-           <SidebarMenuItem>
-              <Link href="/profile">
-                <SidebarMenuButton isActive={pathname === '/profile'} tooltip="Perfil">
-                  <User />
-                  <span>Perfil</span>
-                </SidebarMenuButton>
-              </Link>
-            </SidebarMenuItem>
-           <SidebarMenuItem>
-            <SidebarMenuButton onClick={handleLogout} tooltip="Cerrar Sesión">
-              <LogOut />
-              <span>Cerrar Sesión</span>
+      
+      <SidebarFooter className="border-t border-sidebar-border p-2 space-y-1">
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <Link href="/profile" className="w-full">
+              <SidebarMenuButton 
+                isActive={pathname === '/profile'} 
+                tooltip="Perfil"
+                className="w-full justify-start gap-3 px-3 py-2.5"
+              >
+                <User className="h-5 w-5" />
+                <span className="font-medium">Perfil</span>
+              </SidebarMenuButton>
+            </Link>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton 
+              onClick={handleLogout} 
+              tooltip="Cerrar Sesión"
+              className="w-full justify-start gap-3 px-3 py-2.5 text-destructive hover:text-destructive hover:bg-destructive/10"
+            >
+              <LogOut className="h-5 w-5" />
+              <span className="font-medium">Cerrar Sesión</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
-        <div className="flex items-center gap-3 p-2 group-data-[collapsible=icon]:hidden">
-           <Avatar className="h-10 w-10">
-              <AvatarImage src={user.profilePictureURL} alt={`${user.firstName} ${user.lastName}`} />
-              <AvatarFallback>{getInitials(user.firstName, user.lastName)}</AvatarFallback>
-            </Avatar>
-            <div className="flex flex-col">
-              <span className="text-sm font-semibold">{user.firstName} {user.lastName}</span>
-              <span className="text-xs text-muted-foreground">{user.email}</span>
-            </div>
+        
+        <div className="flex items-center gap-3 px-3 py-2 rounded-md bg-muted/50 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-2">
+          <Avatar className="h-9 w-9 ring-2 ring-background">
+            <AvatarImage src={user.profilePictureURL} alt={`${user.firstName} ${user.lastName}`} />
+            <AvatarFallback className="text-xs font-semibold">
+              {getInitials(user.firstName, user.lastName)}
+            </AvatarFallback>
+          </Avatar>
+          <div className="flex flex-col min-w-0 flex-1 group-data-[collapsible=icon]:hidden">
+            <span className="text-sm font-semibold truncate">
+              {user.firstName} {user.lastName}
+            </span>
+            <span className="text-xs text-muted-foreground truncate">
+              {user.email}
+            </span>
+            {user.role === 'doctor' && user.isOnline !== undefined && (
+              <span className="text-xs mt-1">
+                <Badge variant={user.isOnline ? 'default' : 'secondary'} className="text-xs">
+                  {user.isOnline ? 'En línea' : 'Offline'}
+                </Badge>
+              </span>
+            )}
+          </div>
         </div>
       </SidebarFooter>
     </Sidebar>

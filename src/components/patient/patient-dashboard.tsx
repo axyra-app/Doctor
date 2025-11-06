@@ -15,6 +15,7 @@ import Image from 'next/image';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale/es';
+import { Badge } from '@/components/ui/badge';
 
 const statusMap: { [key: string]: string } = {
   pending: 'Pendiente',
@@ -50,46 +51,48 @@ export function PatientDashboard() {
             />
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-          <div className="absolute bottom-0 left-0 p-6">
-            <h1 className="text-3xl font-bold text-white">
+          <div className="absolute bottom-0 left-0 p-4 sm:p-6">
+            <h1 className="text-2xl sm:text-3xl font-bold text-white">
               Hola, {user?.firstName}
             </h1>
-            <p className="text-lg text-white/90">
+            <p className="text-base sm:text-lg text-white/90 mt-1">
               ¿Necesitas atención médica? Estamos aquí para ayudarte.
             </p>
           </div>
         </div>
       </Card>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card className="flex flex-col">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Send className="text-primary" /> Nueva Solicitud
+      <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2">
+        <Card className="flex flex-col hover:shadow-md transition-shadow">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <Send className="h-5 w-5 text-primary flex-shrink-0" /> 
+              <span className="truncate">Nueva Solicitud</span>
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-xs sm:text-sm">
               Crea una nueva solicitud de atención médica a domicilio de forma
               rápida y sencilla.
             </CardDescription>
           </CardHeader>
-          <CardContent className="flex-grow flex items-end">
-            <Button asChild className="w-full">
+          <CardContent className="flex-grow flex items-end pt-0">
+            <Button asChild className="w-full" size="sm">
               <Link href="/requests/new">Crear Nueva Solicitud</Link>
             </Button>
           </CardContent>
         </Card>
-        <Card className="flex flex-col">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <List className="text-primary" /> Mis Solicitudes
+        <Card className="flex flex-col hover:shadow-md transition-shadow">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <List className="h-5 w-5 text-primary flex-shrink-0" /> 
+              <span className="truncate">Mis Solicitudes</span>
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-xs sm:text-sm">
               Revisa el estado de tus solicitudes activas y tu historial de
               atenciones.
             </CardDescription>
           </CardHeader>
-          <CardContent className="flex-grow flex items-end">
-            <Button asChild variant="outline" className="w-full">
+          <CardContent className="flex-grow flex items-end pt-0">
+            <Button asChild variant="outline" className="w-full" size="sm">
               <Link href="/requests">Ver Mis Solicitudes</Link>
             </Button>
           </CardContent>
@@ -106,15 +109,15 @@ export function PatientDashboard() {
               <Loader2 className="h-8 w-8 animate-spin" />
             </div>
           ) : recentRequests && recentRequests.length > 0 ? (
-            <ul className="space-y-4">
+            <ul className="space-y-3 sm:space-y-4">
               {recentRequests.map((req) => (
                 <li
                   key={req.id}
-                  className="flex items-center justify-between rounded-md border p-4"
+                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 rounded-md border p-3 sm:p-4 hover:bg-card/80 transition-colors"
                 >
-                  <div>
-                    <p className="font-medium">{req.description}</p>
-                    <p className="text-sm text-muted-foreground">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm sm:text-base line-clamp-2 mb-1">{req.description}</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground">
                       {
                         formatDistanceToNow(new Date(req.requestDate), {
                           addSuffix: true,
@@ -123,16 +126,19 @@ export function PatientDashboard() {
                       }
                     </p>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={`text-sm font-semibold ${
-                        statusColorMap[req.status] || 'text-gray-500'
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <Badge 
+                      variant="outline" 
+                      className={`text-xs ${
+                        req.status === 'completed' ? 'border-green-500 text-green-700 dark:text-green-400' :
+                        req.status === 'accepted' ? 'border-blue-500 text-blue-700 dark:text-blue-400' :
+                        'border-yellow-500 text-yellow-700 dark:text-yellow-400'
                       }`}
                     >
                       {statusMap[req.status] || req.status}
-                    </span>
+                    </Badge>
                     <Link href={`/appointments/${req.id}`}>
-                      <Button variant="ghost" size="icon">
+                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                         <ArrowRight className="h-4 w-4" />
                       </Button>
                     </Link>

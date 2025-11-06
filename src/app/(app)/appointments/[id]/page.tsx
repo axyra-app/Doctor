@@ -14,6 +14,8 @@ import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale/es';
+import { PageHeader } from '@/components/page-header';
+import { ArrowLeft } from 'lucide-react';
 
 export default function AppointmentDetailsPage() {
   const { id: appointmentId } = useParams();
@@ -95,42 +97,52 @@ export default function AppointmentDetailsPage() {
     cancelled: 'Cancelada',
   };
 
-  return (
-    <div className="max-w-3xl mx-auto space-y-6">
-      {/* Header con estado y urgencia */}
-      <Card>
+    return (
+      <div className="max-w-3xl mx-auto space-y-6">
+        <PageHeader
+          title="Detalles de la Solicitud"
+          description="Información completa de la solicitud de atención médica"
+          action={
+            <Button variant="ghost" size="sm" onClick={() => router.back()}>
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Volver
+            </Button>
+          }
+        />
+        {/* Card con estado y urgencia */}
+        <Card>
         <CardHeader>
-          <div className="flex items-start justify-between">
-            <div>
-              <CardTitle className="text-2xl">Detalles de la Solicitud</CardTitle>
-              <CardDescription className="mt-2">
-                Información completa de la solicitud de atención médica
-              </CardDescription>
-            </div>
-            <div className="flex flex-col gap-2 items-end">
-              {appointment.urgency && (
-                <Badge className={urgencyColors[appointment.urgency]}>
-                  <AlertCircle className="h-3 w-3 mr-1" />
-                  {urgencyLabels[appointment.urgency]}
-                </Badge>
-              )}
-              <Badge className={statusColors[appointment.status]}>
-                {statusLabels[appointment.status]}
-              </Badge>
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex-1">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:justify-between">
+                <div className="flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    {appointment.urgency && (
+                      <Badge className={urgencyColors[appointment.urgency]}>
+                        <AlertCircle className="h-3 w-3 mr-1" />
+                        {urgencyLabels[appointment.urgency]}
+                      </Badge>
+                    )}
+                    <Badge className={statusColors[appointment.status]}>
+                      {statusLabels[appointment.status]}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-4 sm:space-y-6">
           {/* Información del Paciente */}
-          <div className="flex items-start gap-4 p-4 bg-secondary rounded-lg border">
-            <User className="h-5 w-5 text-primary mt-1"/>
-            <div className="flex-1">
-              <p className="font-semibold text-sm text-muted-foreground mb-1">Paciente</p>
-              <p className="font-medium text-lg">{patient?.firstName} {patient?.lastName}</p>
+          <div className="flex items-start gap-3 sm:gap-4 p-3 sm:p-4 bg-secondary rounded-lg border">
+            <User className="h-5 w-5 text-primary mt-0.5 sm:mt-1 flex-shrink-0"/>
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-xs sm:text-sm text-muted-foreground mb-1">Paciente</p>
+              <p className="font-medium text-base sm:text-lg break-words">{patient?.firstName} {patient?.lastName}</p>
               {appointment.contactPhone && (
-                <p className="text-sm text-muted-foreground mt-1 flex items-center gap-1">
-                  <Phone className="h-3 w-3" />
-                  {appointment.contactPhone}
+                <p className="text-xs sm:text-sm text-muted-foreground mt-1 flex items-center gap-1">
+                  <Phone className="h-3 w-3 flex-shrink-0" />
+                  <span className="break-all">{appointment.contactPhone}</span>
                 </p>
               )}
             </div>
@@ -138,30 +150,30 @@ export default function AppointmentDetailsPage() {
 
           {/* Especialidad Requerida */}
           {appointment.specialty && (
-            <div className="flex items-center gap-4 p-4 bg-secondary rounded-lg border">
-              <Stethoscope className="h-5 w-5 text-primary"/>
-              <div>
-                <p className="font-semibold text-sm text-muted-foreground mb-1">Especialidad Requerida</p>
-                <p className="font-medium">{appointment.specialty}</p>
+            <div className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 bg-secondary rounded-lg border">
+              <Stethoscope className="h-5 w-5 text-primary flex-shrink-0"/>
+              <div className="min-w-0 flex-1">
+                <p className="font-semibold text-xs sm:text-sm text-muted-foreground mb-1">Especialidad Requerida</p>
+                <p className="font-medium text-sm sm:text-base break-words">{appointment.specialty}</p>
               </div>
             </div>
           )}
 
           {/* Dirección */}
-          <div className="flex items-start gap-4 p-4 bg-secondary rounded-lg border">
-            <MapPin className="h-5 w-5 text-primary mt-1"/>
-            <div className="flex-1">
-              <p className="font-semibold text-sm text-muted-foreground mb-1">Dirección de Visita</p>
-              <p className="font-medium">{appointment.address}</p>
+          <div className="flex items-start gap-3 sm:gap-4 p-3 sm:p-4 bg-secondary rounded-lg border">
+            <MapPin className="h-5 w-5 text-primary mt-0.5 sm:mt-1 flex-shrink-0"/>
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-xs sm:text-sm text-muted-foreground mb-1">Dirección de Visita</p>
+              <p className="font-medium text-sm sm:text-base break-words">{appointment.address}</p>
             </div>
           </div>
 
           {/* Fecha y Hora */}
-          <div className="flex items-center gap-4 p-4 bg-secondary rounded-lg border">
-            <Calendar className="h-5 w-5 text-primary"/>
-            <div>
-              <p className="font-semibold text-sm text-muted-foreground mb-1">Fecha de Solicitud</p>
-              <p className="font-medium">
+          <div className="flex items-start sm:items-center gap-3 sm:gap-4 p-3 sm:p-4 bg-secondary rounded-lg border">
+            <Calendar className="h-5 w-5 text-primary mt-0.5 sm:mt-0 flex-shrink-0"/>
+            <div className="min-w-0 flex-1">
+              <p className="font-semibold text-xs sm:text-sm text-muted-foreground mb-1">Fecha de Solicitud</p>
+              <p className="font-medium text-sm sm:text-base">
                 {new Date(appointment.requestDate).toLocaleDateString('es-ES', { 
                   weekday: 'long', 
                   year: 'numeric', 
@@ -171,8 +183,8 @@ export default function AppointmentDetailsPage() {
                   minute: '2-digit'
                 })}
               </p>
-              <p className="text-sm text-muted-foreground mt-1">
-                <Clock className="h-3 w-3 inline mr-1" />
+              <p className="text-xs sm:text-sm text-muted-foreground mt-1 flex items-center gap-1">
+                <Clock className="h-3 w-3 flex-shrink-0" />
                 Hace {formatDistanceToNow(new Date(appointment.requestDate), { addSuffix: true, locale: es })}
               </p>
             </div>

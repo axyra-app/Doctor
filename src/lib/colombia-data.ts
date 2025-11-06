@@ -1,0 +1,116 @@
+/**
+ * Datos de Colombia: Ciudades, zonas y especialidades médicas
+ */
+
+export const COLOMBIAN_CITIES = [
+  { value: 'bogota', label: 'Bogotá D.C.' },
+  { value: 'medellin', label: 'Medellín' },
+  { value: 'cali', label: 'Cali' },
+  { value: 'barranquilla', label: 'Barranquilla' },
+  { value: 'cartagena', label: 'Cartagena' },
+  { value: 'bucaramanga', label: 'Bucaramanga' },
+  { value: 'pereira', label: 'Pereira' },
+  { value: 'santa-marta', label: 'Santa Marta' },
+  { value: 'ibague', label: 'Ibagué' },
+  { value: 'manizales', label: 'Manizales' },
+  { value: 'pasto', label: 'Pasto' },
+  { value: 'neiva', label: 'Neiva' },
+  { value: 'villavicencio', label: 'Villavicencio' },
+  { value: 'armenia', label: 'Armenia' },
+  { value: 'valledupar', label: 'Valledupar' },
+  { value: 'monteria', label: 'Montería' },
+  { value: 'sincelejo', label: 'Sincelejo' },
+  { value: 'popayan', label: 'Popayán' },
+  { value: 'tunja', label: 'Tunja' },
+  { value: 'riohacha', label: 'Riohacha' },
+];
+
+export const COLOMBIAN_ZONES = {
+  bogota: [
+    { value: 'chapinero', label: 'Chapinero' },
+    { value: 'usaquen', label: 'Usaquén' },
+    { value: 'suba', label: 'Suba' },
+    { value: 'engativa', label: 'Engativá' },
+    { value: 'fontibon', label: 'Fontibón' },
+    { value: 'kennedy', label: 'Kennedy' },
+    { value: 'bosa', label: 'Bosa' },
+    { value: 'ciudad-bolivar', label: 'Ciudad Bolívar' },
+    { value: 'san-cristobal', label: 'San Cristóbal' },
+    { value: 'usme', label: 'Usme' },
+    { value: 'tunjuelito', label: 'Tunjuelito' },
+    { value: 'bosa', label: 'Bosa' },
+    { value: 'puente-aranda', label: 'Puente Aranda' },
+    { value: 'candelaria', label: 'La Candelaria' },
+    { value: 'santa-fe', label: 'Santa Fe' },
+    { value: 'san-cristobal', label: 'San Cristóbal' },
+    { value: 'usme', label: 'Usme' },
+    { value: 'tunjuelito', label: 'Tunjuelito' },
+    { value: 'rafael-uribe', label: 'Rafael Uribe Uribe' },
+    { value: 'ciudad-bolivar', label: 'Ciudad Bolívar' },
+  ],
+  medellin: [
+    { value: 'el-poblado', label: 'El Poblado' },
+    { value: 'laureles', label: 'Laureles' },
+    { value: 'belen', label: 'Belén' },
+    { value: 'manrique', label: 'Manrique' },
+    { value: 'araujo', label: 'Aranjuez' },
+    { value: 'castilla', label: 'Castilla' },
+    { value: 'doce-de-octubre', label: 'Doce de Octubre' },
+    { value: 'robledo', label: 'Robledo' },
+    { value: 'villa-hermosa', label: 'Villa Hermosa' },
+    { value: 'buenos-aires', label: 'Buenos Aires' },
+  ],
+  cali: [
+    { value: 'granada', label: 'Granada' },
+    { value: 'san-fernando', label: 'San Fernando' },
+    { value: 'el-penon', label: 'El Peñón' },
+    { value: 'santa-monica', label: 'Santa Mónica' },
+    { value: 'normandia', label: 'Normandía' },
+    { value: 'ciudad-jardin', label: 'Ciudad Jardín' },
+    { value: 'pance', label: 'Pance' },
+    { value: 'pichinde', label: 'Pichindé' },
+  ],
+  barranquilla: [
+    { value: 'norte-centro-historico', label: 'Norte Centro Histórico' },
+    { value: 'sur-oriente', label: 'Sur Oriente' },
+    { value: 'metropolitana', label: 'Metropolitana' },
+    { value: 'riomar', label: 'Riomar' },
+    { value: 'sur-occidente', label: 'Sur Occidente' },
+  ],
+  cartagena: [
+    { value: 'centro-historico', label: 'Centro Histórico' },
+    { value: 'bocagrande', label: 'Bocagrande' },
+    { value: 'castillogrande', label: 'Castillogrande' },
+    { value: 'manga', label: 'Manga' },
+    { value: 'pie-de-la-popa', label: 'Pie de la Popa' },
+  ],
+};
+
+export const MEDICAL_SPECIALTIES = [
+  { value: 'medicina-general', label: 'Medicina General' },
+  { value: 'pediatria', label: 'Pediatría' },
+  { value: 'cardiologia', label: 'Cardiología' },
+  { value: 'ginecologia', label: 'Ginecología' },
+  { value: 'neurologia', label: 'Neurología' },
+  { value: 'dermatologia', label: 'Dermatología' },
+  { value: 'oftalmologia', label: 'Oftalmología' },
+  { value: 'otorrinolaringologia', label: 'Otorrinolaringología' },
+  { value: 'ortopedia', label: 'Ortopedia' },
+  { value: 'psiquiatria', label: 'Psiquiatría' },
+  { value: 'endocrinologia', label: 'Endocrinología' },
+  { value: 'gastroenterologia', label: 'Gastroenterología' },
+  { value: 'nefrologia', label: 'Nefrología' },
+  { value: 'neumologia', label: 'Neumología' },
+  { value: 'reumatologia', label: 'Reumatología' },
+  { value: 'urologia', label: 'Urología' },
+  { value: 'anestesiologia', label: 'Anestesiología' },
+  { value: 'medicina-interna', label: 'Medicina Interna' },
+  { value: 'medicina-familiar', label: 'Medicina Familiar' },
+  { value: 'medicina-de-emergencia', label: 'Medicina de Emergencia' },
+];
+
+export const COLOMBIA_CENTER = {
+  lat: 4.7110, // Bogotá
+  lng: -74.0721,
+};
+

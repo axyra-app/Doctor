@@ -5,8 +5,8 @@
 export const MAPBOX_ACCESS_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN || '';
 
 export const MAP_DEFAULT_CENTER = {
-  lat: 19.4326, // Ciudad de México
-  lng: -99.1332,
+  lat: 4.7110, // Bogotá, Colombia
+  lng: -74.0721,
 };
 
 export const MAP_DEFAULT_ZOOM = 13;
@@ -58,7 +58,7 @@ export async function geocodeAddress(address: string): Promise<{ lat: number; ln
 
   try {
     const response = await fetch(
-      `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(address)}.json?access_token=${MAPBOX_ACCESS_TOKEN}&limit=1`
+      `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(address)}.json?access_token=${MAPBOX_ACCESS_TOKEN}&limit=1&country=co&proximity=-74.0721,4.7110`
     );
     const data = await response.json();
 
@@ -70,6 +70,49 @@ export async function geocodeAddress(address: string): Promise<{ lat: number; ln
   } catch (error) {
     console.error('Geocoding error:', error);
     return null;
+  }
+}
+
+/**
+ * Autocomplete addresses using Mapbox Geocoding API
+ * Returns list of suggested addresses
+ */
+export interface AddressSuggestion {
+  place_name: string;
+  center: [number, number]; // [lng, lat]
+  context?: Array<{ text: string }>;
+}
+
+export async function autocompleteAddress(
+  query: string,
+  limit: number = 5
+): Promise<AddressSuggestion[]> {
+  if (!MAPBOX_ACCESS_TOKEN) {
+    console.warn('Mapbox access token not configured');
+    return [];
+  }
+
+  if (!query || query.length < 3) {
+    return [];
+  }
+
+  try {
+    const response = await fetch(
+      `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${MAPBOX_ACCESS_TOKEN}&limit=${limit}&country=co&proximity=-74.0721,4.7110&types=address,poi,neighborhood,locality`
+    );
+    const data = await response.json();
+
+    if (data.features && data.features.length > 0) {
+      return data.features.map((feature: any) => ({
+        place_name: feature.place_name,
+        center: feature.center,
+        context: feature.context,
+      }));
+    }
+    return [];
+  } catch (error) {
+    console.error('Autocomplete error:', error);
+    return [];
   }
 }
 

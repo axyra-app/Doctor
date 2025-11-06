@@ -22,6 +22,8 @@ import { useState } from 'react';
 import { useFirestore, updateDocumentNonBlocking } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { FormDescription } from '@/components/ui/form';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { COLOMBIAN_CITIES, COLOMBIAN_ZONES, MEDICAL_SPECIALTIES } from '@/lib/colombia-data';
 
 
 const baseProfileSchema = {
@@ -76,6 +78,7 @@ export function ProfileForm() {
       lastName: user.lastName,
       phone: user.phone || '',
       city: user.city || '',
+      zone: user.zone || '',
       ...(isDoctor && {
         specialty: user.specialty || '',
         yearsOfExperience: user.yearsOfExperience || undefined,
@@ -190,9 +193,27 @@ export function ProfileForm() {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Ciudad</FormLabel>
-                <FormControl>
-                  <Input placeholder="Tu ciudad" {...field} />
-                </FormControl>
+                <Select
+                  onValueChange={(value) => {
+                    field.onChange(value);
+                    setSelectedCity(value);
+                  }}
+                  value={field.value || ''}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecciona tu ciudad" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="">Selecciona una ciudad</SelectItem>
+                    {COLOMBIAN_CITIES.map((city) => (
+                      <SelectItem key={city.value} value={city.value}>
+                        {city.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <FormMessage />
               </FormItem>
             )}
@@ -209,9 +230,21 @@ export function ProfileForm() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Especialidad Médica</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Ej: Cardiología, Pediatría" {...field} />
-                    </FormControl>
+                    <Select onValueChange={field.onChange} value={field.value || ''}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecciona tu especialidad" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="">Selecciona una especialidad</SelectItem>
+                        {MEDICAL_SPECIALTIES.map((specialty) => (
+                          <SelectItem key={specialty.value} value={specialty.value}>
+                            {specialty.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}

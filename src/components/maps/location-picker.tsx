@@ -6,9 +6,9 @@ import type { MapRef } from 'react-map-gl/mapbox';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Loader2, MapPin, Navigation, Search } from 'lucide-react';
-import { MAPBOX_ACCESS_TOKEN, MAP_DEFAULT_CENTER, geocodeAddress } from '@/lib/mapbox';
+import { Loader2, MapPin, Navigation } from 'lucide-react';
+import { MAPBOX_ACCESS_TOKEN, MAP_DEFAULT_CENTER } from '@/lib/mapbox';
+import { AddressAutocomplete } from '@/components/ui/address-autocomplete';
 import { useGeolocation } from '@/hooks/use-geolocation';
 import { toast } from 'sonner';
 
@@ -35,7 +35,6 @@ export function LocationPicker({
     zoom: 15,
   });
   const [searchAddress, setSearchAddress] = useState(address || '');
-  const [isSearching, setIsSearching] = useState(false);
   const [mapRef, setMapRef] = useState<MapRef | null>(null);
 
   useEffect(() => {
@@ -91,12 +90,9 @@ export function LocationPicker({
     }
   }, [currentLat, currentLng, isLoadingLocation, onLocationSelect]);
 
-  const handleSearchAddress = useCallback(async () => {
-    if (!searchAddress.trim()) return;
-
-    setIsSearching(true);
-    try {
-      const location = await geocodeAddress(searchAddress);
+  const handleAddressChange = useCallback(
+    (address: string, location?: { lat: number; lng: number }) => {
+      setSearchAddress(address);
       if (location) {
         setSelectedLocation(location);
         setViewState({
@@ -104,18 +100,12 @@ export function LocationPicker({
           latitude: location.lat,
           zoom: 15,
         });
-        onLocationSelect({ ...location, address: searchAddress });
+        onLocationSelect({ ...location, address });
         toast.success('Dirección encontrada', { description: 'Ubicación seleccionada en el mapa.' });
-      } else {
-        toast.error('Error', { description: 'No se pudo encontrar la dirección. Intenta con otra búsqueda.' });
       }
-    } catch (error) {
-      console.error('Error searching address:', error);
-      toast.error('Error', { description: 'Hubo un problema al buscar la dirección.' });
-    } finally {
-      setIsSearching(false);
-    }
-  }, [searchAddress, onLocationSelect]);
+    },
+    [onLocationSelect]
+  );
 
   if (!MAPBOX_ACCESS_TOKEN) {
     return (
@@ -148,34 +138,16 @@ export function LocationPicker({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Search Bar */}
+        {/* Search Bar with Autocomplete */}
         <div className="flex gap-2">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar dirección..."
+          <div className="flex-1">
+            <AddressAutocomplete
               value={searchAddress}
-              onChange={(e) => setSearchAddress(e.target.value)}
-              onKeyPress={(e) => {
-                if (e.key === 'Enter') {
-                  handleSearchAddress();
-                }
-              }}
-              className="pl-10"
-              disabled={disabled || isSearching}
+              onChange={handleAddressChange}
+              placeholder="Buscar dirección en Colombia..."
+              disabled={disabled}
             />
           </div>
-          <Button
-            onClick={handleSearchAddress}
-            disabled={disabled || isSearching || !searchAddress.trim()}
-            variant="outline"
-          >
-            {isSearching ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Search className="h-4 w-4" />
-            )}
-          </Button>
           <Button
             onClick={handleUseCurrentLocation}
             disabled={disabled || isLoadingLocation || !currentLat || !currentLng}

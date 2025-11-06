@@ -19,6 +19,7 @@ import { collection, addDoc } from 'firebase/firestore';
 import { LocationPicker } from '@/components/maps/location-picker';
 import { geocodeAddress } from '@/lib/mapbox';
 import { PageHeader } from '@/components/page-header';
+import { MEDICAL_SPECIALTIES } from '@/lib/colombia-data';
 
 const requestSchema = z.object({
   description: z.string().min(20, { message: 'Por favor, describe tu problema con más detalle (mínimo 20 caracteres).' }),
@@ -32,21 +33,6 @@ const requestSchema = z.object({
 });
 
 type RequestFormValues = z.infer<typeof requestSchema>;
-
-const specialties = [
-  'Médico General',
-  'Pediatra',
-  'Cardiólogo',
-  'Dermatólogo',
-  'Ginecólogo',
-  'Oftalmólogo',
-  'Otorrinolaringólogo',
-  'Neurólogo',
-  'Psiquiatra',
-  'Traumatólogo',
-  'Urgenciólogo',
-  'Otro',
-];
 
 const urgencyLabels = {
   low: 'Baja - Puede esperar',
@@ -184,9 +170,9 @@ export default function NewRequestPage() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {specialties.map((specialty) => (
-                          <SelectItem key={specialty} value={specialty}>
-                            {specialty}
+                        {MEDICAL_SPECIALTIES.map((specialty) => (
+                          <SelectItem key={specialty.value} value={specialty.value}>
+                            {specialty.label}
                           </SelectItem>
                         ))}
                       </SelectContent>

@@ -81,6 +81,13 @@ const SelectContent = React.forwardRef<
         className
       )}
       position={position}
+      onPointerDownOutside={(e) => {
+        // Allow clicks on sidebar to close the select
+        const target = e.target as HTMLElement;
+        if (target.closest('[data-sidebar="sidebar"]') || target.closest('[data-sidebar="trigger"]')) {
+          e.preventDefault();
+        }
+      }}
       {...props}
     >
       <SelectScrollUpButton />

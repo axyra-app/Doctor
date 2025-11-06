@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
-import Map, { Marker, Popup, Source, Layer } from 'react-map-gl';
+import Map, { Marker, Popup, Source, Layer } from 'react-map-gl/mapbox';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { MAPBOX_ACCESS_TOKEN, MAP_DEFAULT_CENTER, calculateDistance, estimateTravelTime, getRoute } from '@/lib/mapbox';
 import { AppointmentRequest } from '@/types';

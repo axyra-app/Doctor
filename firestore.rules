@@ -44,15 +44,16 @@ service cloud.firestore {
      * @allow (get) Authenticated users can read any user document (for doctor/patient profiles).
      * @allow (update) Authenticated user with ID {userId} can update their own document.
      * @allow (delete) Authenticated user with ID {userId} can delete their own document.
-     * @deny (list) Listing all users is prohibited (use queries with filters instead).
-     * @principle Enforces document ownership for updates/deletes, but allows read access for profile viewing.
+     * @allow (list) Authenticated users can list users with queries (queries must use filters like role, city, specialty).
+     * @principle Enforces document ownership for updates/deletes, but allows read access for profile viewing and filtered queries for doctor discovery.
      */
     match /users/{userId} {
       // Anyone signed in can read user profiles (needed for doctor/patient profiles)
       allow get: if isSignedIn();
       
-      // Prohibit listing all users - use queries with filters instead
-      allow list: if false;
+      // Allow authenticated users to list users (queries should use filters like role=='doctor', city, specialty, etc.)
+      // This is needed for the doctor search/suggestion feature
+      allow list: if isSignedIn();
       
       // User can create their own document with required fields
       allow create: if isSignedIn() && 

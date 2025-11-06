@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button';
 import { CheckCircle2, MapPin, UserCheck, MessageSquare, Star } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/use-auth-provider';
+import { motion, useInView } from 'framer-motion';
+import { useRef } from 'react';
 
 const steps = [
   {
@@ -43,37 +45,66 @@ const steps = [
 
 export function HowItWorksSection() {
   const { user } = useAuth();
+  const ref = useRef<HTMLElement>(null);
+  const isInView = useInView(ref, { once: true, margin: '-100px' });
 
   return (
-    <section className="py-20 sm:py-32 bg-muted/50">
+    <section ref={ref} className="py-20 sm:py-32 bg-muted/50">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-2xl text-center mb-16">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+          className="mx-auto max-w-2xl text-center mb-16"
+        >
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl mb-4">
             ¿Cómo Funciona?
           </h2>
           <p className="text-lg text-muted-foreground">
             Proceso simple y rápido en 4 pasos
           </p>
-        </div>
+        </motion.div>
 
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4 mb-12">
           {steps.map((step, index) => {
             const Icon = step.icon;
             return (
-              <div key={index} className="relative">
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 30, rotateX: -15 }}
+                animate={isInView ? { opacity: 1, y: 0, rotateX: 0 } : { opacity: 0, y: 30, rotateX: -15 }}
+                transition={{ 
+                  duration: 0.6, 
+                  delay: index * 0.15,
+                  type: 'spring',
+                  stiffness: 100,
+                }}
+                className="relative"
+              >
                 {/* Connector Line */}
                 {index < steps.length - 1 && (
                   <div className="hidden lg:block absolute top-12 left-full w-full h-0.5 bg-border -z-10">
-                    <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-primary" />
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      whileInView={{ scale: 1 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.3, delay: 0.5 + index * 0.1 }}
+                      className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-primary"
+                    />
                   </div>
                 )}
 
                 <Card className="h-full border-2 hover:border-primary/50 transition-colors">
                   <CardHeader>
                     <div className="mb-4 flex items-center justify-between">
-                      <div className={`flex h-12 w-12 items-center justify-center rounded-lg ${step.bgColor}`}>
+                      <motion.div
+                        whileHover={{ scale: 1.15, rotate: [0, -10, 10, -10, 0] }}
+                        transition={{ duration: 0.5 }}
+                        className={`flex h-12 w-12 items-center justify-center rounded-lg ${step.bgColor}`}
+                      >
                         <Icon className={`h-6 w-6 ${step.color}`} />
-                      </div>
+                      </motion.div>
                       <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-bold">
                         {step.step}
                       </div>
@@ -86,12 +117,18 @@ export function HowItWorksSection() {
                     </CardDescription>
                   </CardContent>
                 </Card>
-              </div>
+              </motion.div>
             );
           })}
         </div>
 
-        <div className="text-center">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, delay: 0.4 }}
+          className="text-center"
+        >
           {!user ? (
             <Button asChild size="lg" className="text-base px-8 py-6">
               <Link href="/signup">
@@ -107,7 +144,7 @@ export function HowItWorksSection() {
               </Link>
             </Button>
           )}
-        </div>
+        </motion.div>
       </div>
     </section>
   );

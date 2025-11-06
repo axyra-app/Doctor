@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Stethoscope, Menu } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth-provider';
+import { motion, useScroll, useTransform } from 'framer-motion';
+import { useEffect, useState } from 'react';
 import {
   Sheet,
   SheetContent,
@@ -15,9 +17,30 @@ import {
 
 export function Navbar() {
   const { user } = useAuth();
+  const { scrollY } = useScroll();
+  const [scrolled, setScrolled] = useState(false);
+  const backgroundColor = useTransform(
+    scrollY,
+    [0, 50],
+    ['rgba(0, 0, 0, 0)', 'rgba(0, 0, 0, 0.95)']
+  );
+  const borderOpacity = useTransform(scrollY, [0, 50], [0, 1]);
+
+  useEffect(() => {
+    const unsubscribe = scrollY.on('change', (latest) => {
+      setScrolled(latest > 50);
+    });
+    return () => unsubscribe();
+  }, [scrollY]);
 
   return (
-    <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <motion.nav
+      style={{
+        backgroundColor: scrolled ? undefined : backgroundColor,
+        borderBottomWidth: scrolled ? 1 : borderOpacity,
+      }}
+      className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 transition-all"
+    >
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
@@ -112,7 +135,7 @@ export function Navbar() {
           </Sheet>
         </div>
       </div>
-    </nav>
+    </motion.nav>
   );
 }
 

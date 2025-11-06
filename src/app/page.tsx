@@ -10,6 +10,7 @@ import { HowItWorksSection } from '@/components/landing/how-it-works-section';
 import { TestimonialsSection } from '@/components/landing/testimonials-section';
 import { CTASection } from '@/components/landing/cta-section';
 import { Footer } from '@/components/landing/footer';
+import { StructuredData } from '@/components/landing/structured-data';
 
 export default function Home() {
   const { user, loading } = useAuth();
@@ -34,22 +35,25 @@ export default function Home() {
   // If user is logged in, they'll be redirected, but show landing page while redirecting
   // If not logged in, show full landing page
   return (
-    <div className="min-h-screen flex flex-col">
-      <Navbar />
-      <main className="flex-1">
-        <HeroSection />
-        <div id="features">
-          <FeaturesSection />
-        </div>
-        <div id="how-it-works">
-          <HowItWorksSection />
-        </div>
-        <div id="testimonials">
-          <TestimonialsSection />
-        </div>
-        <CTASection />
-      </main>
-      <Footer />
-    </div>
+    <>
+      <StructuredData />
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <main className="flex-1">
+          <HeroSection />
+          <div id="features">
+            <FeaturesSection />
+          </div>
+          <div id="how-it-works">
+            <HowItWorksSection />
+          </div>
+          <div id="testimonials">
+            <TestimonialsSection />
+          </div>
+          <CTASection />
+        </main>
+        <Footer />
+      </div>
+    </>
   );
 }

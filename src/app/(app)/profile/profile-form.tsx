@@ -198,7 +198,7 @@ export function ProfileForm() {
                     field.onChange(value);
                     setSelectedCity(value);
                   }}
-                  value={field.value || ''}
+                  value={field.value || undefined}
                 >
                   <FormControl>
                     <SelectTrigger>
@@ -206,7 +206,6 @@ export function ProfileForm() {
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="">Selecciona una ciudad</SelectItem>
                     {COLOMBIAN_CITIES.map((city) => (
                       <SelectItem key={city.value} value={city.value}>
                         {city.label}
@@ -230,14 +229,13 @@ export function ProfileForm() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Especialidad Médica</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value || ''}>
+                    <Select onValueChange={field.onChange} value={field.value || undefined}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecciona tu especialidad" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="">Selecciona una especialidad</SelectItem>
                         {MEDICAL_SPECIALTIES.map((specialty) => (
                           <SelectItem key={specialty.value} value={specialty.value}>
                             {specialty.label}

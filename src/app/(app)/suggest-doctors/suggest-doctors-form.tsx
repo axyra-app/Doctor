@@ -161,9 +161,9 @@ export function SuggestDoctorsForm() {
                     onValueChange={(value) => {
                       field.onChange(value);
                       setSelectedCity(value);
-                      form.setValue('zone', ''); // Reset zone when city changes
+                      form.setValue('zone', undefined); // Reset zone when city changes
                     }}
-                    value={field.value}
+                    value={field.value || undefined}
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -190,14 +190,13 @@ export function SuggestDoctorsForm() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Zona (Opcional)</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value || undefined}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecciona una zona" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="">Todas las zonas</SelectItem>
                         {availableZones.map((zone) => (
                           <SelectItem key={zone.value} value={zone.value}>
                             {zone.label}
